@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(tree:*)",
+      "WebFetch(domain:www.slybroadcast.com)",
+      "Bash(npx create-next-app:*)",
+      "Bash(npx create-next-app@latest:*)",
+      "Bash(npx shadcn@latest init -d)",
+      "Bash(npx shadcn@latest add button card input label table tabs badge dialog dropdown-menu toast form select textarea -y)",
+      "Bash(npx shadcn@latest add button card input label table tabs badge dialog dropdown-menu sonner form select textarea -y)"
+    ]
+  }
+}
