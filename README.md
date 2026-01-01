@@ -4,19 +4,21 @@ An outbound sales automation system for domain name sales. Automate email drip c
 
 ## Features
 
-### Current (Phase 1 & 2)
+### Current (Phase 1, 2 & 3)
 - **Domain Management**: Track your domain portfolio with buy-it-now prices, floor prices, and spaceship.com landing page links
 - **Lead Management**: Import prospects via CSV, track status through the sales funnel
 - **Template System**: Create email and voicemail templates with variable placeholders
 - **Activity Tracking**: Log and view all outreach activities
 - **Dashboard**: Real-time stats, quick actions, and setup progress tracking
 - **Authentication**: Secure login/signup with Supabase Auth
-
-### Planned (Phase 3-5)
 - **AI Content Generation**: Claude API for personalized email and voicemail scripts
-- **Voice Synthesis**: ElevenLabs for natural voice cloning
-- **Email Campaigns**: Automated drip campaigns via Resend
+- **Voice Synthesis**: ElevenLabs text-to-speech for natural voicemail audio
+- **Email Delivery**: Send emails via Resend with tracking support
 - **Voicemail Drops**: Ringless voicemail delivery via Slybroadcast
+- **Lead Scraping**: Puppeteer-based web scraper for extracting contact info
+
+### Planned (Phase 4-5)
+- **Campaign Engine**: Automated drip campaigns with BullMQ job queue
 - **Escalation System**: Automated alerts for high-engagement prospects
 - **Analytics**: Campaign performance tracking and cost analysis
 
@@ -140,7 +142,7 @@ src/
 |-------|--------|-------------|
 | **Phase 1** | Complete | Foundation: Next.js, Supabase, Auth, UI |
 | **Phase 2** | Complete | Core CRUD: Domains, Leads, Templates, Activity |
-| **Phase 3** | Planned | API Integrations: Claude, ElevenLabs, Resend, Slybroadcast |
+| **Phase 3** | Complete | API Integrations: Claude, ElevenLabs, Resend, Slybroadcast, Scraper |
 | **Phase 4** | Planned | Campaign Engine: Job queue, schedulers, webhooks |
 | **Phase 5** | Planned | Advanced: Escalation rules, analytics, cost tracking |
 

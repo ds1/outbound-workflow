@@ -44,8 +44,13 @@ outbound-workflow/
 │   │   │   ├── leads/            # Lead/prospect management
 │   │   │   ├── settings/         # App settings
 │   │   │   └── templates/        # Email/voicemail templates
-│   │   ├── api/                  # API routes (planned)
-│   │   │   └── auth/callback/    # Supabase auth callback
+│   │   ├── api/                  # API routes
+│   │   │   ├── auth/callback/    # Supabase auth callback
+│   │   │   ├── generate/         # AI content generation endpoints
+│   │   │   ├── voice/            # Voice synthesis endpoints
+│   │   │   ├── email/            # Email delivery endpoints
+│   │   │   ├── voicemail/        # Voicemail campaign endpoints
+│   │   │   └── scraper/          # Web scraping endpoint
 │   │   ├── layout.tsx            # Root layout with providers
 │   │   └── page.tsx              # Landing page (redirects)
 │   ├── components/
@@ -63,11 +68,12 @@ outbound-workflow/
 │   │       └── server.ts         # Server client
 │   ├── providers/
 │   │   └── QueryProvider.tsx     # TanStack Query provider
-│   ├── services/                 # External API integrations (planned)
-│   │   ├── claude/               # Claude API service
-│   │   ├── elevenlabs/           # ElevenLabs service
-│   │   ├── resend/               # Resend email service
-│   │   └── slybroadcast/         # Slybroadcast voicemail service
+│   ├── services/                 # External API integrations
+│   │   ├── claude/               # Claude API for AI content generation
+│   │   ├── elevenlabs/           # ElevenLabs for voice synthesis
+│   │   ├── resend/               # Resend for email delivery
+│   │   ├── scraper/              # Puppeteer web scraper
+│   │   └── slybroadcast/         # Slybroadcast for voicemail drops
 │   └── types/
 │       └── database.ts           # Supabase database types
 ├── supabase/
@@ -137,12 +143,23 @@ outbound-workflow/
 - [x] Dashboard with real-time stats
 - [x] React Query data fetching layer
 
-### Phase 3: API Integrations (PLANNED)
-- [ ] Claude API service for content generation
-- [ ] ElevenLabs service for voice synthesis
-- [ ] Resend service for email delivery
-- [ ] Slybroadcast service for voicemail drops
-- [ ] Web scraper for lead generation
+### Phase 3: API Integrations (COMPLETED)
+- [x] Claude API service for content generation (`src/services/claude/`)
+- [x] ElevenLabs service for voice synthesis (`src/services/elevenlabs/`)
+- [x] Resend service for email delivery (`src/services/resend/`)
+- [x] Slybroadcast service for voicemail drops (`src/services/slybroadcast/`)
+- [x] Web scraper for lead generation (`src/services/scraper/`)
+- [x] API route endpoints:
+  - `/api/generate/email` - AI email generation
+  - `/api/generate/voicemail` - AI voicemail script generation
+  - `/api/generate/subjects` - AI subject line generation
+  - `/api/voice/synthesize` - Text-to-speech synthesis
+  - `/api/voice/voices` - List available voices
+  - `/api/email/send` - Send email via Resend
+  - `/api/voicemail/send` - Single voicemail drop
+  - `/api/voicemail/campaign` - Bulk voicemail campaigns
+  - `/api/voicemail/audio` - List Slybroadcast audio files
+  - `/api/scraper` - Web scraping for contacts
 
 ### Phase 4: Campaign Engine (PLANNED)
 - [ ] Campaign creation wizard
