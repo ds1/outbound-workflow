@@ -4,7 +4,7 @@ An outbound sales automation system for domain name sales. Automate email drip c
 
 ## Features
 
-### Current (Phase 1, 2 & 3)
+### Current (Phase 1-4)
 - **Domain Management**: Track your domain portfolio with buy-it-now prices, floor prices, and spaceship.com landing page links
 - **Lead Management**: Import prospects via CSV, track status through the sales funnel
 - **Template System**: Create email and voicemail templates with variable placeholders
@@ -16,11 +16,13 @@ An outbound sales automation system for domain name sales. Automate email drip c
 - **Email Delivery**: Send emails via Resend with tracking support
 - **Voicemail Drops**: Ringless voicemail delivery via Slybroadcast
 - **Lead Scraping**: Puppeteer-based web scraper for extracting contact info
+- **Campaign Engine**: Multi-step campaigns with BullMQ job queue
+- **Campaign Wizard**: Create campaigns with steps, scheduling, and prospect enrollment
+- **Delivery Webhooks**: Track email opens, clicks, bounces; voicemail delivery status
 
-### Planned (Phase 4-5)
-- **Campaign Engine**: Automated drip campaigns with BullMQ job queue
+### Planned (Phase 5)
 - **Escalation System**: Automated alerts for high-engagement prospects
-- **Analytics**: Campaign performance tracking and cost analysis
+- **Analytics Dashboard**: Campaign performance tracking and cost analysis
 
 ## Tech Stack
 
@@ -143,7 +145,7 @@ src/
 | **Phase 1** | Complete | Foundation: Next.js, Supabase, Auth, UI |
 | **Phase 2** | Complete | Core CRUD: Domains, Leads, Templates, Activity |
 | **Phase 3** | Complete | API Integrations: Claude, ElevenLabs, Resend, Slybroadcast, Scraper |
-| **Phase 4** | Planned | Campaign Engine: Job queue, schedulers, webhooks |
+| **Phase 4** | Complete | Campaign Engine: BullMQ job queue, schedulers, webhooks |
 | **Phase 5** | Planned | Advanced: Escalation rules, analytics, cost tracking |
 
 ## Template Variables

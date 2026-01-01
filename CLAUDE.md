@@ -161,12 +161,16 @@ outbound-workflow/
   - `/api/voicemail/audio` - List Slybroadcast audio files
   - `/api/scraper` - Web scraping for contacts
 
-### Phase 4: Campaign Engine (PLANNED)
-- [ ] Campaign creation wizard
-- [ ] BullMQ job queue setup
-- [ ] Drip campaign scheduler
-- [ ] Bulk voicemail processor
-- [ ] Webhook handlers for delivery events
+### Phase 4: Campaign Engine (COMPLETED)
+- [x] Campaign creation wizard (multi-step: details, steps, schedule, prospects)
+- [x] BullMQ job queue setup with Redis (`src/lib/queue/`)
+- [x] Drip campaign scheduler (`src/jobs/scheduled-tasks.worker.ts`)
+- [x] Email campaign processor (`src/jobs/email-campaign.worker.ts`)
+- [x] Voicemail campaign processor (`src/jobs/voicemail-campaign.worker.ts`)
+- [x] Webhook handlers for delivery events:
+  - `/api/webhooks/email` - Resend email events
+  - `/api/webhooks/voicemail` - Slybroadcast voicemail events
+- [x] Campaign management hooks (`src/hooks/useCampaigns.ts`)
 
 ### Phase 5: Advanced Features (PLANNED)
 - [ ] Escalation rules engine
