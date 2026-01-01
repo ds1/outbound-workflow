@@ -1,34 +1,77 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Globe, Users, Mail, Phone } from "lucide-react";
+"use client";
 
-const stats = [
-  {
-    name: "Total Domains",
-    value: "0",
-    icon: Globe,
-    description: "Active domains in portfolio",
-  },
-  {
-    name: "Total Leads",
-    value: "0",
-    icon: Users,
-    description: "Prospects in pipeline",
-  },
-  {
-    name: "Emails Sent",
-    value: "0",
-    icon: Mail,
-    description: "This month",
-  },
-  {
-    name: "Voicemails Dropped",
-    value: "0",
-    icon: Phone,
-    description: "This month",
-  },
-];
+import Link from "next/link";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Globe, Users, Mail, Phone, FileText, Loader2, ArrowRight, Activity } from "lucide-react";
+import { useDomains } from "@/hooks/useDomains";
+import { useLeads } from "@/hooks/useLeads";
+import { useEmailTemplates, useVoicemailTemplates } from "@/hooks/useTemplates";
+import { useRecentActivityLogs } from "@/hooks/useActivityLogs";
+import { formatDistanceToNow } from "date-fns";
+
+const activityTypeIcons: Record<string, typeof Mail> = {
+  email_sent: Mail,
+  voicemail_sent: Phone,
+  lead_created: Users,
+  lead_updated: Users,
+  domain_created: Globe,
+  domain_updated: Globe,
+  campaign_started: Activity,
+  campaign_completed: Activity,
+};
+
+const activityTypeLabels: Record<string, string> = {
+  email_sent: "Email Sent",
+  voicemail_sent: "Voicemail Dropped",
+  lead_created: "Lead Created",
+  lead_updated: "Lead Updated",
+  domain_created: "Domain Added",
+  domain_updated: "Domain Updated",
+  campaign_started: "Campaign Started",
+  campaign_completed: "Campaign Completed",
+};
 
 export default function DashboardPage() {
+  const { data: domains = [], isLoading: domainsLoading } = useDomains();
+  const { data: leads = [], isLoading: leadsLoading } = useLeads();
+  const { data: emailTemplates = [], isLoading: emailTemplatesLoading } = useEmailTemplates();
+  const { data: voicemailTemplates = [], isLoading: voicemailTemplatesLoading } = useVoicemailTemplates();
+  const { data: recentActivity = [], isLoading: activityLoading } = useRecentActivityLogs(10);
+
+  const stats = [
+    {
+      name: "Total Domains",
+      value: domainsLoading ? "-" : domains.length.toString(),
+      icon: Globe,
+      description: "Active domains in portfolio",
+      href: "/domains",
+    },
+    {
+      name: "Total Leads",
+      value: leadsLoading ? "-" : leads.length.toString(),
+      icon: Users,
+      description: "Prospects in pipeline",
+      href: "/leads",
+    },
+    {
+      name: "Email Templates",
+      value: emailTemplatesLoading ? "-" : emailTemplates.length.toString(),
+      icon: Mail,
+      description: "Ready for campaigns",
+      href: "/templates",
+    },
+    {
+      name: "Voicemail Templates",
+      value: voicemailTemplatesLoading ? "-" : voicemailTemplates.length.toString(),
+      icon: Phone,
+      description: "Ready for campaigns",
+      href: "/templates",
+    },
+  ];
+
+  const isLoading = domainsLoading || leadsLoading || emailTemplatesLoading || voicemailTemplatesLoading;
+
   return (
     <div className="space-y-6">
       {/* Page header */}
@@ -42,16 +85,18 @@ export default function DashboardPage() {
       {/* Stats cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {stats.map((stat) => (
-          <Card key={stat.name}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">{stat.name}</CardTitle>
-              <stat.icon className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stat.value}</div>
-              <p className="text-xs text-muted-foreground">{stat.description}</p>
-            </CardContent>
-          </Card>
+          <Link key={stat.name} href={stat.href}>
+            <Card className="hover:bg-muted/50 transition-colors cursor-pointer">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">{stat.name}</CardTitle>
+                <stat.icon className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stat.value}</div>
+                <p className="text-xs text-muted-foreground">{stat.description}</p>
+              </CardContent>
+            </Card>
+          </Link>
         ))}
       </div>
 
@@ -64,24 +109,39 @@ export default function DashboardPage() {
             <CardDescription>Common tasks to get started</CardDescription>
           </CardHeader>
           <CardContent className="space-y-2">
-            <div className="rounded-lg border p-3 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer">
-              <div className="font-medium">Add a Domain</div>
-              <div className="text-sm text-muted-foreground">
-                Add a new domain to your portfolio
+            <Link href="/domains">
+              <div className="rounded-lg border p-3 hover:bg-muted/50 transition-colors cursor-pointer flex items-center justify-between">
+                <div>
+                  <div className="font-medium">Add a Domain</div>
+                  <div className="text-sm text-muted-foreground">
+                    Add a new domain to your portfolio
+                  </div>
+                </div>
+                <ArrowRight className="h-4 w-4 text-muted-foreground" />
               </div>
-            </div>
-            <div className="rounded-lg border p-3 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer">
-              <div className="font-medium">Import Leads</div>
-              <div className="text-sm text-muted-foreground">
-                Upload a CSV file with prospect data
+            </Link>
+            <Link href="/leads">
+              <div className="rounded-lg border p-3 hover:bg-muted/50 transition-colors cursor-pointer flex items-center justify-between">
+                <div>
+                  <div className="font-medium">Import Leads</div>
+                  <div className="text-sm text-muted-foreground">
+                    Upload a CSV file with prospect data
+                  </div>
+                </div>
+                <ArrowRight className="h-4 w-4 text-muted-foreground" />
               </div>
-            </div>
-            <div className="rounded-lg border p-3 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer">
-              <div className="font-medium">Create Campaign</div>
-              <div className="text-sm text-muted-foreground">
-                Start a new email or voicemail campaign
+            </Link>
+            <Link href="/campaigns">
+              <div className="rounded-lg border p-3 hover:bg-muted/50 transition-colors cursor-pointer flex items-center justify-between">
+                <div>
+                  <div className="font-medium">Create Campaign</div>
+                  <div className="text-sm text-muted-foreground">
+                    Start a new email or voicemail campaign
+                  </div>
+                </div>
+                <ArrowRight className="h-4 w-4 text-muted-foreground" />
               </div>
-            </div>
+            </Link>
           </CardContent>
         </Card>
 
@@ -92,9 +152,42 @@ export default function DashboardPage() {
             <CardDescription>Latest outreach events</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center justify-center h-32 text-muted-foreground">
-              <p>No activity yet. Start by adding domains and leads.</p>
-            </div>
+            {activityLoading ? (
+              <div className="flex items-center justify-center h-32">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : recentActivity.length === 0 ? (
+              <div className="flex items-center justify-center h-32 text-muted-foreground">
+                <p>No activity yet. Start by adding domains and leads.</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {recentActivity.map((activity) => {
+                  const Icon = activityTypeIcons[activity.activity_type] || Activity;
+                  return (
+                    <div key={activity.id} className="flex items-start gap-3 text-sm">
+                      <div className="mt-0.5">
+                        <Icon className="h-4 w-4 text-muted-foreground" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium truncate">
+                          {activityTypeLabels[activity.activity_type] || activity.activity_type}
+                        </div>
+                        <div className="text-muted-foreground truncate">
+                          {activity.description ||
+                            (activity.prospects
+                              ? `${activity.prospects.first_name || ""} ${activity.prospects.last_name || activity.prospects.email || "Unknown"}`
+                              : activity.domains?.full_domain || "—")}
+                        </div>
+                      </div>
+                      <div className="text-xs text-muted-foreground whitespace-nowrap">
+                        {formatDistanceToNow(new Date(activity.created_at), { addSuffix: true })}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -108,28 +201,57 @@ export default function DashboardPage() {
         <CardContent>
           <div className="space-y-3">
             <div className="flex items-center gap-3">
-              <div className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-gray-300">
-                <span className="text-xs">1</span>
+              <div className={`flex h-6 w-6 items-center justify-center rounded-full border-2 ${domains.length > 0 ? "border-green-500 bg-green-500 text-white" : "border-gray-300"}`}>
+                {domains.length > 0 ? (
+                  <span className="text-xs">✓</span>
+                ) : (
+                  <span className="text-xs">1</span>
+                )}
               </div>
-              <span>Add API keys in Settings (Claude, ElevenLabs, Slybroadcast, Resend)</span>
+              <span className={domains.length > 0 ? "line-through text-muted-foreground" : ""}>
+                Add domains to your portfolio
+              </span>
+              {domains.length > 0 && (
+                <Badge variant="secondary">{domains.length} added</Badge>
+              )}
             </div>
             <div className="flex items-center gap-3">
-              <div className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-gray-300">
-                <span className="text-xs">2</span>
+              <div className={`flex h-6 w-6 items-center justify-center rounded-full border-2 ${leads.length > 0 ? "border-green-500 bg-green-500 text-white" : "border-gray-300"}`}>
+                {leads.length > 0 ? (
+                  <span className="text-xs">✓</span>
+                ) : (
+                  <span className="text-xs">2</span>
+                )}
               </div>
-              <span>Add domains to your portfolio</span>
+              <span className={leads.length > 0 ? "line-through text-muted-foreground" : ""}>
+                Import or add leads
+              </span>
+              {leads.length > 0 && (
+                <Badge variant="secondary">{leads.length} added</Badge>
+              )}
             </div>
             <div className="flex items-center gap-3">
-              <div className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-gray-300">
-                <span className="text-xs">3</span>
+              <div className={`flex h-6 w-6 items-center justify-center rounded-full border-2 ${emailTemplates.length > 0 || voicemailTemplates.length > 0 ? "border-green-500 bg-green-500 text-white" : "border-gray-300"}`}>
+                {emailTemplates.length > 0 || voicemailTemplates.length > 0 ? (
+                  <span className="text-xs">✓</span>
+                ) : (
+                  <span className="text-xs">3</span>
+                )}
               </div>
-              <span>Import or add leads</span>
+              <span className={emailTemplates.length > 0 || voicemailTemplates.length > 0 ? "line-through text-muted-foreground" : ""}>
+                Create email and voicemail templates
+              </span>
+              {(emailTemplates.length > 0 || voicemailTemplates.length > 0) && (
+                <Badge variant="secondary">
+                  {emailTemplates.length + voicemailTemplates.length} created
+                </Badge>
+              )}
             </div>
             <div className="flex items-center gap-3">
               <div className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-gray-300">
                 <span className="text-xs">4</span>
               </div>
-              <span>Create email and voicemail templates</span>
+              <span>Add API keys in Settings (Claude, ElevenLabs, Slybroadcast, Resend)</span>
             </div>
             <div className="flex items-center gap-3">
               <div className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-gray-300">

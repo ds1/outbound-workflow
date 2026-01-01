@@ -47,6 +47,7 @@ export type Database = {
           created_at?: string;
           updated_at?: string;
         };
+        Relationships: [];
       };
       prospects: {
         Row: {
@@ -106,6 +107,15 @@ export type Database = {
           created_at?: string;
           updated_at?: string;
         };
+        Relationships: [
+          {
+            foreignKeyName: "prospects_domain_id_fkey";
+            columns: ["domain_id"];
+            isOneToOne: false;
+            referencedRelation: "domains";
+            referencedColumns: ["id"];
+          }
+        ];
       };
       campaigns: {
         Row: {
@@ -165,6 +175,7 @@ export type Database = {
           created_at?: string;
           updated_at?: string;
         };
+        Relationships: [];
       };
       email_templates: {
         Row: {
@@ -206,6 +217,7 @@ export type Database = {
           created_at?: string;
           updated_at?: string;
         };
+        Relationships: [];
       };
       voicemail_templates: {
         Row: {
@@ -244,6 +256,7 @@ export type Database = {
           created_at?: string;
           updated_at?: string;
         };
+        Relationships: [];
       };
       activity_logs: {
         Row: {
@@ -279,6 +292,29 @@ export type Database = {
           created_by?: string | null;
           created_at?: string;
         };
+        Relationships: [
+          {
+            foreignKeyName: "activity_logs_prospect_id_fkey";
+            columns: ["prospect_id"];
+            isOneToOne: false;
+            referencedRelation: "prospects";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "activity_logs_campaign_id_fkey";
+            columns: ["campaign_id"];
+            isOneToOne: false;
+            referencedRelation: "campaigns";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "activity_logs_domain_id_fkey";
+            columns: ["domain_id"];
+            isOneToOne: false;
+            referencedRelation: "domains";
+            referencedColumns: ["id"];
+          }
+        ];
       };
       escalation_rules: {
         Row: {
@@ -323,6 +359,7 @@ export type Database = {
           created_at?: string;
           updated_at?: string;
         };
+        Relationships: [];
       };
       campaign_prospects: {
         Row: {
@@ -370,6 +407,22 @@ export type Database = {
           completed_at?: string | null;
           paused_at?: string | null;
         };
+        Relationships: [
+          {
+            foreignKeyName: "campaign_prospects_campaign_id_fkey";
+            columns: ["campaign_id"];
+            isOneToOne: false;
+            referencedRelation: "campaigns";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "campaign_prospects_prospect_id_fkey";
+            columns: ["prospect_id"];
+            isOneToOne: false;
+            referencedRelation: "prospects";
+            referencedColumns: ["id"];
+          }
+        ];
       };
     };
     Views: {
@@ -379,6 +432,9 @@ export type Database = {
       [_ in never]: never;
     };
     Enums: {
+      [_ in never]: never;
+    };
+    CompositeTypes: {
       [_ in never]: never;
     };
   };
@@ -401,5 +457,7 @@ export type EmailTemplate = Database["public"]["Tables"]["email_templates"]["Row
 export type VoicemailTemplate = Database["public"]["Tables"]["voicemail_templates"]["Row"];
 
 export type ActivityLog = Database["public"]["Tables"]["activity_logs"]["Row"];
+export type ActivityLogInsert = Database["public"]["Tables"]["activity_logs"]["Insert"];
+
 export type EscalationRule = Database["public"]["Tables"]["escalation_rules"]["Row"];
 export type CampaignProspect = Database["public"]["Tables"]["campaign_prospects"]["Row"];
