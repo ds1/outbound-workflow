@@ -293,3 +293,4 @@ npm run lint         # Run ESLint
 6. **Json type** - use imported `Json` type from database.ts for JSONB fields
 7. **Middleware** - Next.js shows deprecation warning but it still works
 8. **Price fields** - stored as numbers, displayed with `$` formatting
+9. **Memoize derived objects in hooks** - when a hook returns a computed object, wrap it with `useMemo` to prevent infinite render loops in consuming components that use it as a useEffect dependency
