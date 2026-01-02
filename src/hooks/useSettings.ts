@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
 import type { NotificationPreferences, UserSetting } from "@/types/database";
@@ -187,11 +188,11 @@ export interface ProfileSettings {
 export function useProfileSettings() {
   const { data: settings, isLoading } = useUserSettings();
 
-  const profile: ProfileSettings = {
+  const profile = useMemo<ProfileSettings>(() => ({
     display_name: settings?.display_name || null,
     sender_email: settings?.sender_email || null,
     sender_phone: settings?.sender_phone || null,
-  };
+  }), [settings?.display_name, settings?.sender_email, settings?.sender_phone]);
 
   return { data: profile, isLoading };
 }
