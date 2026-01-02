@@ -38,9 +38,11 @@ outbound-workflow/
 │   │   │   ├── login/            # Login page
 │   │   │   └── signup/           # Signup page
 │   │   ├── (dashboard)/          # Protected dashboard routes
+│   │   │   ├── analytics/        # Analytics dashboard with charts
 │   │   │   ├── campaigns/        # Campaign management
 │   │   │   ├── dashboard/        # Main dashboard
 │   │   │   ├── domains/          # Domain portfolio
+│   │   │   ├── escalations/      # Escalation rules management
 │   │   │   ├── leads/            # Lead/prospect management
 │   │   │   ├── settings/         # App settings
 │   │   │   └── templates/        # Email/voicemail templates
@@ -58,8 +60,12 @@ outbound-workflow/
 │   │   └── ui/                   # shadcn/ui components
 │   ├── hooks/                    # React Query hooks
 │   │   ├── useActivityLogs.ts    # Activity logging
+│   │   ├── useAnalytics.ts       # Analytics data and cost estimates
+│   │   ├── useCampaigns.ts       # Campaign CRUD and enrollment
 │   │   ├── useDomains.ts         # Domain CRUD
+│   │   ├── useEscalationRules.ts # Escalation rules CRUD
 │   │   ├── useLeads.ts           # Lead/prospect CRUD
+│   │   ├── useSettings.ts        # User settings and notification prefs
 │   │   └── useTemplates.ts       # Template CRUD
 │   ├── lib/
 │   │   └── supabase/             # Supabase client configuration
@@ -70,6 +76,7 @@ outbound-workflow/
 │   │   └── QueryProvider.tsx     # TanStack Query provider
 │   ├── services/                 # External API integrations
 │   │   ├── claude/               # Claude API for AI content generation
+│   │   ├── cost-tracking.ts      # API usage cost logging
 │   │   ├── elevenlabs/           # ElevenLabs for voice synthesis
 │   │   ├── resend/               # Resend for email delivery
 │   │   ├── scraper/              # Puppeteer web scraper
@@ -78,7 +85,8 @@ outbound-workflow/
 │       └── database.ts           # Supabase database types
 ├── supabase/
 │   └── migrations/
-│       └── 001_initial_schema.sql # Database schema
+│       ├── 001_initial_schema.sql # Core database schema
+│       └── 002_cost_tracking.sql  # Cost logs, notifications, user settings
 ├── .env.example                  # Environment template
 └── .env.local                    # Local environment (gitignored)
 ```
@@ -172,11 +180,13 @@ outbound-workflow/
   - `/api/webhooks/voicemail` - Slybroadcast voicemail events
 - [x] Campaign management hooks (`src/hooks/useCampaigns.ts`)
 
-### Phase 5: Advanced Features (PLANNED)
-- [ ] Escalation rules engine
-- [ ] Email notifications (danmakesthings@gmail.com)
-- [ ] Analytics dashboard
-- [ ] Cost tracking and alerts
+### Phase 5: Advanced Features (COMPLETED)
+- [x] Escalation rules management UI (`/escalations`)
+- [x] Analytics dashboard with charts (`/analytics`)
+- [x] Cost tracking service (`src/services/cost-tracking.ts`)
+- [x] Notification preferences in settings
+- [x] User settings hooks for API keys and profile
+- [x] Database migration 002 for cost_logs, notification_preferences, user_settings
 
 ## Key Patterns and Conventions
 
@@ -258,6 +268,20 @@ npm run lint         # Run ESLint
 # Database
 # Run migrations in Supabase dashboard SQL editor
 ```
+
+## Setup Status
+
+**Completed by user:**
+- [x] Migration 001 (initial schema) - run in Supabase
+- [x] Migration 002 (cost tracking) - run in Supabase
+- [x] Supabase environment variables configured (URL, anon key, service role key)
+
+**Not yet configured:**
+- [ ] Redis for job queue
+- [ ] Anthropic API key (Claude)
+- [ ] ElevenLabs API key
+- [ ] Slybroadcast credentials
+- [ ] Resend API key
 
 ## Important Notes for AI Assistants
 
