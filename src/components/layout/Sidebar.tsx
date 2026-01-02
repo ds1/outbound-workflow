@@ -10,6 +10,8 @@ import {
   Settings,
   LayoutDashboard,
   Phone,
+  AlertTriangle,
+  BarChart3,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -19,6 +21,8 @@ const navigation = [
   { name: "Leads", href: "/leads", icon: Users },
   { name: "Campaigns", href: "/campaigns", icon: Mail },
   { name: "Templates", href: "/templates", icon: FileText },
+  { name: "Escalations", href: "/escalations", icon: AlertTriangle },
+  { name: "Analytics", href: "/analytics", icon: BarChart3 },
   { name: "Settings", href: "/settings", icon: Settings },
 ];
 

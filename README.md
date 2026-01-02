@@ -4,7 +4,7 @@ An outbound sales automation system for domain name sales. Automate email drip c
 
 ## Features
 
-### Current (Phase 1-4)
+### Current (Phase 1-5)
 - **Domain Management**: Track your domain portfolio with buy-it-now prices, floor prices, and spaceship.com landing page links
 - **Lead Management**: Import prospects via CSV, track status through the sales funnel
 - **Template System**: Create email and voicemail templates with variable placeholders
@@ -19,10 +19,10 @@ An outbound sales automation system for domain name sales. Automate email drip c
 - **Campaign Engine**: Multi-step campaigns with BullMQ job queue
 - **Campaign Wizard**: Create campaigns with steps, scheduling, and prospect enrollment
 - **Delivery Webhooks**: Track email opens, clicks, bounces; voicemail delivery status
-
-### Planned (Phase 5)
-- **Escalation System**: Automated alerts for high-engagement prospects
-- **Analytics Dashboard**: Campaign performance tracking and cost analysis
+- **Escalation Rules**: Automated alerts for high-engagement prospects and no-response triggers
+- **Analytics Dashboard**: Campaign performance tracking with charts and metrics
+- **Cost Tracking**: API usage cost monitoring and projections
+- **Notification Preferences**: Configurable email alerts and cost thresholds
 
 ## Tech Stack
 
@@ -146,7 +146,7 @@ src/
 | **Phase 2** | Complete | Core CRUD: Domains, Leads, Templates, Activity |
 | **Phase 3** | Complete | API Integrations: Claude, ElevenLabs, Resend, Slybroadcast, Scraper |
 | **Phase 4** | Complete | Campaign Engine: BullMQ job queue, schedulers, webhooks |
-| **Phase 5** | Planned | Advanced: Escalation rules, analytics, cost tracking |
+| **Phase 5** | Complete | Advanced: Escalation rules, analytics, cost tracking |
 
 ## Template Variables
 

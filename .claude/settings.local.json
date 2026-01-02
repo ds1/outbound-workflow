@@ -7,7 +7,10 @@
       "Bash(npx create-next-app@latest:*)",
       "Bash(npx shadcn@latest init -d)",
       "Bash(npx shadcn@latest add button card input label table tabs badge dialog dropdown-menu toast form select textarea -y)",
-      "Bash(npx shadcn@latest add button card input label table tabs badge dialog dropdown-menu sonner form select textarea -y)"
+      "Bash(npx shadcn@latest add button card input label table tabs badge dialog dropdown-menu sonner form select textarea -y)",
+      "Bash(npm uninstall:*)",
+      "Bash(git reset:*)",
+      "Bash(npx shadcn@latest add switch -y)"
     ]
   }
 }

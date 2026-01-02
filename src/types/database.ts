@@ -424,6 +424,114 @@ export type Database = {
           }
         ];
       };
+      cost_logs: {
+        Row: {
+          id: string;
+          service: string;
+          operation: string;
+          quantity: number;
+          unit: string;
+          unit_cost: number;
+          total_cost: number;
+          campaign_id: string | null;
+          prospect_id: string | null;
+          metadata: Json;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          service: string;
+          operation: string;
+          quantity?: number;
+          unit: string;
+          unit_cost: number;
+          total_cost: number;
+          campaign_id?: string | null;
+          prospect_id?: string | null;
+          metadata?: Json;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          service?: string;
+          operation?: string;
+          quantity?: number;
+          unit?: string;
+          unit_cost?: number;
+          total_cost?: number;
+          campaign_id?: string | null;
+          prospect_id?: string | null;
+          metadata?: Json;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      notification_preferences: {
+        Row: {
+          id: string;
+          user_id: string;
+          escalation_email: string;
+          daily_digest: boolean;
+          reply_alerts: boolean;
+          cost_alerts: boolean;
+          cost_alert_threshold: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          escalation_email?: string;
+          daily_digest?: boolean;
+          reply_alerts?: boolean;
+          cost_alerts?: boolean;
+          cost_alert_threshold?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          escalation_email?: string;
+          daily_digest?: boolean;
+          reply_alerts?: boolean;
+          cost_alerts?: boolean;
+          cost_alert_threshold?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      user_settings: {
+        Row: {
+          id: string;
+          user_id: string;
+          setting_key: string;
+          setting_value: string | null;
+          is_encrypted: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          setting_key: string;
+          setting_value?: string | null;
+          is_encrypted?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          setting_key?: string;
+          setting_value?: string | null;
+          is_encrypted?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: {
       [_ in never]: never;
@@ -461,3 +569,40 @@ export type ActivityLogInsert = Database["public"]["Tables"]["activity_logs"]["I
 
 export type EscalationRule = Database["public"]["Tables"]["escalation_rules"]["Row"];
 export type CampaignProspect = Database["public"]["Tables"]["campaign_prospects"]["Row"];
+
+// Cost tracking types (from migration 002)
+export interface CostLog {
+  id: string;
+  service: string;
+  operation: string;
+  quantity: number;
+  unit: string;
+  unit_cost: number;
+  total_cost: number;
+  campaign_id: string | null;
+  prospect_id: string | null;
+  metadata: Json;
+  created_at: string;
+}
+
+export interface NotificationPreferences {
+  id: string;
+  user_id: string;
+  escalation_email: string;
+  daily_digest: boolean;
+  reply_alerts: boolean;
+  cost_alerts: boolean;
+  cost_alert_threshold: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface UserSetting {
+  id: string;
+  user_id: string;
+  setting_key: string;
+  setting_value: string | null;
+  is_encrypted: boolean;
+  created_at: string;
+  updated_at: string;
+}
