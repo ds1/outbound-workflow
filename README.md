@@ -7,6 +7,7 @@ An outbound sales automation system for domain name sales. Automate email drip c
 ### Current (Phase 1-5)
 - **Domain Management**: Track your domain portfolio with buy-it-now prices, floor prices, and spaceship.com landing page links
 - **Lead Management**: Import prospects via CSV, track status through the sales funnel
+- **Lead Finding**: AI-powered strategies to find potential domain buyers via web search
 - **Template System**: Create email and voicemail templates with variable placeholders
 - **Activity Tracking**: Log and view all outreach activities
 - **Dashboard**: Real-time stats, quick actions, and setup progress tracking
@@ -157,6 +158,19 @@ Use these placeholders in your email and voicemail templates:
 | **Lead** | `{{lead.first_name}}`, `{{lead.last_name}}`, `{{lead.company}}`, `{{lead.email}}` |
 | **Domain** | `{{domain.name}}`, `{{domain.full}}`, `{{domain.price}}`, `{{domain.url}}` |
 | **Sender** | `{{sender.name}}`, `{{sender.email}}`, `{{sender.phone}}` |
+
+## Lead Finding Strategies
+
+Find potential buyers using four intelligent search strategies:
+
+| Strategy | Best For | How It Works |
+|----------|----------|--------------|
+| **Domain Upgrade** | Premium .com domains | Finds companies using inferior domains (prefixed, hyphenated, alt-TLDs) |
+| **SEO/PPC Bidders** | Keyword-rich domains | Finds companies ranking for domain keywords who may want direct traffic |
+| **Emerging Startups** | Trendy/tech domains | Searches startup directories for early-stage companies |
+| **Market Leaders** | Industry domains | Targets established companies by keyword mapping |
+
+See [User Guide](docs/USER_GUIDE.md) for detailed usage instructions.
 
 ## Scripts
 

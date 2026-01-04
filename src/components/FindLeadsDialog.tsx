@@ -729,7 +729,7 @@ export function FindLeadsDialog({
                       {q.status === "error" && (
                         <XCircle className="h-4 w-4 text-red-500" />
                       )}
-                      <span className="flex-1 truncate font-mono text-xs">
+                      <span className="flex-1 font-mono text-xs break-all">
                         {q.query}
                       </span>
                       {q.status === "done" && (
@@ -817,8 +817,8 @@ export function FindLeadsDialog({
                           className="mt-1"
                         />
                         <div className="flex-1 min-w-0">
-                          <p className="font-medium text-sm truncate">{target.name}</p>
-                          <p className="text-xs text-muted-foreground truncate">{target.url}</p>
+                          <p className="font-medium text-sm break-words">{target.name}</p>
+                          <p className="text-xs text-muted-foreground break-all">{target.url}</p>
                           {target.snippet && (
                             <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
                               {target.snippet}
@@ -878,7 +878,7 @@ export function FindLeadsDialog({
                     <CheckCircle2 className="h-5 w-5 text-green-500" />
                   )}
                   {p.status === "error" && <XCircle className="h-5 w-5 text-red-500" />}
-                  <span className="flex-1 truncate">{p.company}</span>
+                  <span className="flex-1 break-words">{p.company}</span>
                   {p.status === "done" && (
                     <span className="text-sm text-muted-foreground">
                       {p.contactsFound} contacts
