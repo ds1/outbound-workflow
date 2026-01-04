@@ -15,7 +15,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Plus, Globe, MoreHorizontal, Pencil, Trash2, ExternalLink, Loader2 } from "lucide-react";
+import { Plus, Globe, MoreHorizontal, Pencil, Trash2, ExternalLink, Loader2, Search } from "lucide-react";
+import { FindLeadsDialog } from "@/components/FindLeadsDialog";
 import type { Domain } from "@/types/database";
 
 const domainSchema = z.object({
@@ -33,6 +34,7 @@ export default function DomainsPage() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingDomain, setEditingDomain] = useState<Domain | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [findLeadsFor, setFindLeadsFor] = useState<Domain | null>(null);
 
   const { data: domains = [], isLoading, error } = useDomains();
   const createDomain = useCreateDomain();
@@ -329,6 +331,10 @@ export default function DomainsPage() {
                             <Pencil className="mr-2 h-4 w-4" />
                             Edit
                           </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setFindLeadsFor(domain)}>
+                            <Search className="mr-2 h-4 w-4" />
+                            Find Leads
+                          </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={() => handleDelete(domain.id)}
                             className="text-red-600"
@@ -351,6 +357,13 @@ export default function DomainsPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Find Leads Dialog */}
+      <FindLeadsDialog
+        domain={findLeadsFor}
+        open={!!findLeadsFor}
+        onClose={() => setFindLeadsFor(null)}
+      />
     </div>
   );
 }

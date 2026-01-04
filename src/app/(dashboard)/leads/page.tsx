@@ -16,7 +16,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Plus, Users, Upload, MoreHorizontal, Pencil, Trash2, Loader2, FileSpreadsheet } from "lucide-react";
+import { Plus, Users, Upload, MoreHorizontal, Pencil, Trash2, Loader2, FileSpreadsheet, Search } from "lucide-react";
+import { FindLeadsDialog } from "@/components/FindLeadsDialog";
 import type { Prospect } from "@/types/database";
 
 const leadSchema = z.object({
@@ -59,6 +60,7 @@ export default function LeadsPage() {
     last_name?: string;
     company_name?: string;
   }>>([]);
+  const [showFindLeads, setShowFindLeads] = useState(false);
 
   const { data: leads = [], isLoading, error } = useLeads(
     statusFilter !== "all" ? { status: statusFilter as ProspectStatus } : undefined
@@ -219,6 +221,12 @@ export default function LeadsPage() {
           </p>
         </div>
         <div className="flex gap-2">
+          {/* Find Leads Button */}
+          <Button variant="outline" onClick={() => setShowFindLeads(true)}>
+            <Search className="mr-2 h-4 w-4" />
+            Find Leads
+          </Button>
+
           {/* Import CSV Dialog */}
           <Dialog open={isImportOpen} onOpenChange={setIsImportOpen}>
             <DialogTrigger asChild>
@@ -561,6 +569,13 @@ export default function LeadsPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Find Leads Dialog */}
+      <FindLeadsDialog
+        open={showFindLeads}
+        onClose={() => setShowFindLeads(false)}
+        showDomainSelector={true}
+      />
     </div>
   );
 }

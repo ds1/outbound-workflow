@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { scraperService, ScrapeResult, ScrapeOptions, ScrapedContact } from "@/services/scraper";
+import { createClient } from "@/lib/supabase/server";
 
 export interface ScrapeRequest {
   url?: string;
@@ -11,6 +12,17 @@ export interface ScrapeRequest {
 // POST - Scrape one or more URLs for contact information
 export async function POST(request: NextRequest) {
   try {
+    // Verify authentication
+    const supabase = await createClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return NextResponse.json(
+        { error: "Authentication required" },
+        { status: 401 }
+      );
+    }
+
     const body = (await request.json()) as ScrapeRequest;
 
     // Validate at least one URL provided

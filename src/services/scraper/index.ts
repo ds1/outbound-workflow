@@ -31,6 +31,32 @@ const EMAIL_REGEX = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
 // US phone patterns
 const PHONE_REGEX = /(?:\+?1[-.\s]?)?\(?[0-9]{3}\)?[-.\s]?[0-9]{3}[-.\s]?[0-9]{4}/g;
 
+// File extensions that should NOT be part of valid emails
+const BLOCKED_FILE_EXTENSIONS = [
+  '.webp', '.jpg', '.jpeg', '.png', '.gif', '.svg', '.ico', '.bmp', '.tiff',
+  '.mp4', '.webm', '.avi', '.mov', '.wmv', '.mp3', '.wav', '.ogg',
+  '.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx',
+  '.zip', '.rar', '.7z', '.tar', '.gz',
+  '.js', '.css', '.html', '.htm', '.xml', '.json',
+  '.woff', '.woff2', '.ttf', '.eot',
+];
+
+// Email prefixes that are typically not useful for sales outreach
+const BLOCKED_EMAIL_PREFIXES = [
+  'noreply', 'no-reply', 'no_reply', 'donotreply', 'do-not-reply', 'do_not_reply',
+  'mailer-daemon', 'postmaster', 'webmaster', 'hostmaster', 'admin@localhost',
+  'root', 'abuse', 'spam', 'unsubscribe', 'bounce', 'null',
+];
+
+// Domains that indicate test/placeholder emails
+const BLOCKED_EMAIL_DOMAINS = [
+  'example.com', 'example.org', 'example.net',
+  'test.com', 'test.org', 'localhost', 'localhost.localdomain',
+  'domain.com', 'email.com', 'yourcompany.com', 'yourdomain.com',
+  'company.com', 'acme.com', 'foo.com', 'bar.com',
+  'mailinator.com', 'tempmail.com', 'throwaway.com',
+];
+
 // Default scrape options
 const DEFAULT_OPTIONS: ScrapeOptions = {
   max_pages: 10,
@@ -119,23 +145,59 @@ class ScraperService {
   }
 
   /**
-   * Extract emails from text
+   * Extract emails from text with improved filtering
    */
   extractEmails(text: string): string[] {
-    const matches = text.match(EMAIL_REGEX) || [];
-    // Filter out common false positives
+    // Decode common URL-encoded characters before extraction
+    const decodedText = text
+      .replace(/\\u003e/gi, '>') // Unicode escapes
+      .replace(/\\u003c/gi, '<')
+      .replace(/u003e/gi, '>')   // Without backslash
+      .replace(/u003c/gi, '<')
+      .replace(/%40/g, '@')      // URL-encoded @
+      .replace(/%2E/gi, '.');    // URL-encoded .
+
+    const matches = decodedText.match(EMAIL_REGEX) || [];
+
+    // Filter out false positives with comprehensive checks
     return [...new Set(matches)].filter((email) => {
       const lower = email.toLowerCase();
-      return (
-        !lower.includes("example.com") &&
-        !lower.includes("domain.com") &&
-        !lower.includes("email.com") &&
-        !lower.includes(".png") &&
-        !lower.includes(".jpg") &&
-        !lower.includes(".gif") &&
-        !lower.endsWith(".js") &&
-        !lower.endsWith(".css")
-      );
+      const [localPart, domain] = lower.split('@');
+
+      if (!localPart || !domain) return false;
+
+      // Check if email contains file extensions (like image@2x.webp)
+      for (const ext of BLOCKED_FILE_EXTENSIONS) {
+        if (lower.includes(ext)) return false;
+      }
+
+      // Check blocked email prefixes
+      for (const prefix of BLOCKED_EMAIL_PREFIXES) {
+        if (localPart === prefix || localPart.startsWith(prefix + '.')) return false;
+      }
+
+      // Check blocked domains
+      for (const blockedDomain of BLOCKED_EMAIL_DOMAINS) {
+        if (domain === blockedDomain) return false;
+      }
+
+      // Additional validation: domain must have at least one dot and valid TLD
+      const domainParts = domain.split('.');
+      if (domainParts.length < 2) return false;
+
+      const tld = domainParts[domainParts.length - 1];
+      // TLD must be 2-10 characters (covers .com to .photography)
+      if (tld.length < 2 || tld.length > 10) return false;
+
+      // Reject if TLD looks like a file extension number (e.g., 2x, 3x for image@2x)
+      if (/^\d+x?$/.test(tld)) return false;
+
+      // Reject emails that look like encoded HTML entities or image references
+      if (/^\d+$/.test(localPart)) return false; // Pure numbers
+      if (localPart.includes('-150x150')) return false; // WordPress thumbnail pattern
+      if (localPart.startsWith('group-') && /\d/.test(localPart)) return false; // Group-123 patterns
+
+      return true;
     });
   }
 
