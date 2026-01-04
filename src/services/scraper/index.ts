@@ -74,13 +74,7 @@ class ScraperService {
    */
   private async getBrowser(): Promise<Browser> {
     if (!this.browser) {
-      // Dynamic import for puppeteer-extra to avoid SSR issues
-      const puppeteerExtra = await import("puppeteer-extra");
-      const StealthPlugin = await import("puppeteer-extra-plugin-stealth");
-
-      puppeteerExtra.default.use(StealthPlugin.default());
-
-      this.browser = await puppeteerExtra.default.launch({
+      this.browser = await puppeteer.launch({
         headless: true,
         args: [
           "--no-sandbox",
