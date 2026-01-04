@@ -302,19 +302,46 @@ New → Contacted → Engaged → Qualified → Converted
 
 1. Go to **Templates** in the sidebar
 2. Click **New Email Template**
-3. Enter:
+3. **Start from a Default** (optional):
+   - Select a pre-written template from the dropdown
+   - Form fields auto-populate with the template content
+   - Customize as needed before saving
+4. Enter or edit:
    - **Name**: Internal reference name
    - **Subject**: Email subject line (supports variables)
    - **Body**: HTML email content (supports variables)
-4. Preview shows rendered template
+5. Preview shows rendered template
+
+#### Default Email Templates
+
+| Template | Best For |
+|----------|----------|
+| **Initial Outreach** | First contact - friendly and direct introduction |
+| **Domain Upgrade Pitch** | Companies using inferior domains (prefixes, alt TLDs) |
+| **Follow-Up Email** | Second touch after no response |
+| **Final Follow-Up** | Last message before closing the loop |
+| **Value Proposition** | Emphasizing ROI and business benefits |
 
 ### Voicemail Templates
 
 1. Go to **Templates**
 2. Click **New Voicemail Template**
-3. Enter:
+3. **Start from a Default** (optional):
+   - Select a pre-written script from the dropdown
+   - Form fields auto-populate with the script
+   - Customize as needed before saving
+4. Enter or edit:
    - **Name**: Internal reference name
    - **Script**: The voicemail script text
+
+#### Default Voicemail Templates
+
+| Template | Best For |
+|----------|----------|
+| **Initial Voicemail** | First voicemail drop - friendly introduction |
+| **Follow-Up Voicemail** | Second touch after no response |
+| **Value Proposition Voicemail** | Highlighting domain benefits |
+| **Final Voicemail** | Last message before closing loop |
 
 ### Using Variables
 
