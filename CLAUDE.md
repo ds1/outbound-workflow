@@ -465,3 +465,44 @@ npm run lint         # Run ESLint
 18. **FindLeadsDialog phases**: strategy → setup → searching → scraping → done
 19. **MinimizedJobs** - fixed position bottom-right, renders only minimized jobs
 20. **Sidebar Active Jobs** - shows all jobs (running + done), click to maximize/reopen
+
+## UX Improvements Roadmap
+
+See `docs/UX_IMPROVEMENTS.md` for the full prioritized list of planned improvements.
+
+### Priority Summary
+
+**Tier 1 - High Impact, Start Here:**
+1. **In-App Voice Preview** - Generate voicemail audio from template text with ElevenLabs, preview in-app, save to Slybroadcast without leaving the app
+2. **Live Template Preview** - Select real lead/domain to see personalized content instead of `{{variables}}`
+3. **Send Test to Self** - Test email/voicemail with your own contact info before sending to leads
+4. **Start Campaign from Leads** - After finding leads, button to start campaign with those leads pre-selected
+
+**Tier 2 - High Impact, Medium Effort:**
+5. Quick Campaign Launcher - One-click campaign with default sequence
+6. AI Lead Scoring - Claude analyzes companies, scores 1-100
+7. Company Research Summary - AI generates talking points per lead
+8. Voicemail Audio Library - Manage all generated audio in-app
+
+**Tier 3 - High Impact, Higher Effort:**
+9. Reply Detection - Webhook detects email replies, surfaces in UI
+10. Suggested Response Generator - AI drafts reply based on conversation
+11. A/B Test Templates - Test variants, track performance
+12. Smart Send Time Optimization - Per-recipient timezone scheduling
+
+### Key Integration Points
+
+These improvements leverage existing APIs:
+- **Claude API**: Lead scoring, research summaries, response generation, template refinement
+- **ElevenLabs**: In-app voice preview and generation
+- **Slybroadcast**: Direct audio upload, audio library management
+- **Resend**: Test emails, reply detection via inbound webhooks
+
+### Implementation Notes
+
+The voice preview feature (Tier 1, Item 1) would:
+1. Add voice selector dropdown to voicemail template form (fetch from `/api/voice/voices`)
+2. Create `/api/voice/preview` endpoint that substitutes variables and synthesizes
+3. Add audio player to template preview panel
+4. Add "Save to Library" button that uploads to Slybroadcast
+5. Store `audio_url` and `elevenlabs_voice_id` on voicemail_templates
