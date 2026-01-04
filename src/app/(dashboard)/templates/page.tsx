@@ -24,7 +24,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Plus, Mail, Phone, FileText, MoreHorizontal, Pencil, Trash2, Loader2, Eye } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Plus, Mail, Phone, FileText, MoreHorizontal, Pencil, Trash2, Loader2, Eye, Sparkles } from "lucide-react";
+import { DEFAULT_EMAIL_TEMPLATES, DEFAULT_VOICEMAIL_TEMPLATES, type DefaultEmailTemplate, type DefaultVoicemailTemplate } from "@/lib/default-templates";
 import type { EmailTemplate, VoicemailTemplate } from "@/types/database";
 
 const emailTemplateSchema = z.object({
@@ -177,6 +179,30 @@ export default function TemplatesPage() {
     voicemailForm.reset();
   };
 
+  // Load default template handlers
+  const handleLoadDefaultEmail = (templateId: string) => {
+    const defaultTemplate = DEFAULT_EMAIL_TEMPLATES.find((t) => t.id === templateId);
+    if (defaultTemplate) {
+      emailForm.reset({
+        name: defaultTemplate.name,
+        subject: defaultTemplate.subject,
+        body_html: defaultTemplate.body_html,
+        body_text: "",
+        preview_text: defaultTemplate.preview_text || "",
+      });
+    }
+  };
+
+  const handleLoadDefaultVoicemail = (templateId: string) => {
+    const defaultTemplate = DEFAULT_VOICEMAIL_TEMPLATES.find((t) => t.id === templateId);
+    if (defaultTemplate) {
+      voicemailForm.reset({
+        name: defaultTemplate.name,
+        script: defaultTemplate.script,
+      });
+    }
+  };
+
   if (emailError || voicemailError) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -240,6 +266,34 @@ export default function TemplatesPage() {
                     </DialogDescription>
                   </DialogHeader>
                   <form onSubmit={emailForm.handleSubmit(onEmailSubmit)} className="space-y-4">
+                    {/* Default template selector - only show when creating new */}
+                    {!editingEmail && (
+                      <div className="space-y-2">
+                        <Label className="flex items-center gap-2">
+                          <Sparkles className="h-4 w-4 text-yellow-500" />
+                          Start from a Template
+                        </Label>
+                        <Select onValueChange={handleLoadDefaultEmail}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a default template (optional)" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {DEFAULT_EMAIL_TEMPLATES.map((template) => (
+                              <SelectItem key={template.id} value={template.id}>
+                                <div className="flex flex-col">
+                                  <span>{template.name}</span>
+                                  <span className="text-xs text-muted-foreground">{template.description}</span>
+                                </div>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <p className="text-xs text-muted-foreground">
+                          Choose a pre-written template to customize, or start from scratch below
+                        </p>
+                      </div>
+                    )}
+
                     <div className="space-y-2">
                       <Label htmlFor="email-name">Template Name</Label>
                       <Input
@@ -414,6 +468,34 @@ export default function TemplatesPage() {
                     </DialogDescription>
                   </DialogHeader>
                   <form onSubmit={voicemailForm.handleSubmit(onVoicemailSubmit)} className="space-y-4">
+                    {/* Default template selector - only show when creating new */}
+                    {!editingVoicemail && (
+                      <div className="space-y-2">
+                        <Label className="flex items-center gap-2">
+                          <Sparkles className="h-4 w-4 text-yellow-500" />
+                          Start from a Template
+                        </Label>
+                        <Select onValueChange={handleLoadDefaultVoicemail}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a default template (optional)" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {DEFAULT_VOICEMAIL_TEMPLATES.map((template) => (
+                              <SelectItem key={template.id} value={template.id}>
+                                <div className="flex flex-col">
+                                  <span>{template.name}</span>
+                                  <span className="text-xs text-muted-foreground">{template.description}</span>
+                                </div>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <p className="text-xs text-muted-foreground">
+                          Choose a pre-written script to customize, or start from scratch below
+                        </p>
+                      </div>
+                    )}
+
                     <div className="space-y-2">
                       <Label htmlFor="voicemail-name">Template Name</Label>
                       <Input
