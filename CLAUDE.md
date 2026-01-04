@@ -1,10 +1,10 @@
 # CLAUDE.md - Project Context for AI Assistants
 
-This document provides comprehensive context about the Outbound Workflow project for AI assistants like Claude.
+This document provides comprehensive context about the Deep Outbound project for AI assistants like Claude.
 
 ## Project Overview
 
-**Outbound Workflow** is an outbound sales automation system designed for selling domain names. It automates email drip campaigns, ringless voicemail drops, leverages AI for content generation, and includes intelligent lead discovery to find potential domain buyers.
+**Deep Outbound** (deepoutbound.com) is an outbound sales automation system designed for selling domain names. It automates email drip campaigns, ringless voicemail drops, leverages AI for content generation, and includes intelligent lead discovery to find potential domain buyers.
 
 ### Key Business Goals
 - Automate outreach to potential domain buyers
@@ -75,7 +75,7 @@ outbound-workflow/
 │   │   │       ├── email/            # Resend email events
 │   │   │       └── voicemail/        # Slybroadcast events
 │   │   ├── layout.tsx                # Root layout with providers
-│   │   └── page.tsx                  # Landing page (redirects)
+│   │   └── page.tsx                  # Public landing page with animations
 │   ├── components/
 │   │   ├── FindLeadsDialog.tsx       # Lead discovery dialog with background jobs
 │   │   ├── MinimizedJobs.tsx         # Floating job progress cards

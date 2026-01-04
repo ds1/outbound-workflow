@@ -1,6 +1,6 @@
-# Outbound Workflow User Guide
+# DeepOutbound User Guide
 
-A complete guide to using Outbound Workflow for domain sales outreach.
+A complete guide to using DeepOutbound for domain sales outreach.
 
 ## Table of Contents
 
@@ -630,7 +630,7 @@ If you see "hydration mismatch" errors:
 
 ## Getting Help
 
-- **Issues**: Report bugs at [GitHub Issues](https://github.com/ds1/outbound-workflow/issues)
+- **Issues**: Report bugs at [GitHub Issues](https://github.com/ds1/deep-outbound/issues)
 - **Documentation**: See [README](../README.md) for technical details
 - **API Docs**: Check individual service documentation for API-specific issues:
   - [Resend Docs](https://resend.com/docs)

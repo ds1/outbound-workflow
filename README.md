@@ -1,6 +1,17 @@
-# Outbound Workflow
+# Deep Outbound
 
-An AI-powered outbound sales automation system for domain name sales. Automate email drip campaigns, ringless voicemail drops, and leverage intelligent lead discovery to find potential domain buyers.
+An AI-powered outbound sales automation system for domain name sales. Live at [deepoutbound.com](https://deepoutbound.com).
+
+Automate email drip campaigns, ringless voicemail drops, and leverage intelligent lead discovery to find potential domain buyers.
+
+## Landing Page
+
+The public landing page features:
+- Animated liquid gradient background with Framer Motion
+- Four sections: Strategic Buyer Discovery, Generate Content, Scheduled Drip Campaigns, Advanced Analytics
+- Lead-finding strategies showcase (Domain Upgrade, SEO/PPC Bidders, Emerging Startups, Market Leaders)
+- Responsive design with Instrument Serif and Outfit typography
+- Dark oceanic color scheme (#050d18, #0a1525, #0d1a2d)
 
 ## Features
 
@@ -73,8 +84,8 @@ An AI-powered outbound sales automation system for domain name sales. Automate e
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/ds1/outbound-workflow.git
-   cd outbound-workflow
+   git clone https://github.com/ds1/deep-outbound.git
+   cd deep-outbound
    ```
 
 2. **Install dependencies**
