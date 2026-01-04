@@ -66,7 +66,7 @@ export default function LoginPage() {
     <Card>
       <CardHeader className="space-y-1">
         <CardTitle className="text-2xl font-bold text-center">
-          Outbound Workflow
+          Deep Outbound
         </CardTitle>
         <CardDescription className="text-center">
           Sign in to manage your domain sales automation
