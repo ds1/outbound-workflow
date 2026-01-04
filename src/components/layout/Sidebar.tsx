@@ -40,7 +40,7 @@ export function Sidebar() {
 
   // Get active or minimized jobs (including completed ones that haven't been dismissed)
   const activeJobs = Array.from(jobs.values()).filter(
-    (job) => minimizedJobs.has(job.id) || job.status === "searching" || job.status === "scraping"
+    (job) => minimizedJobs.has(job.id) || job.status === "searching" || job.status === "scraping" || job.status === "done"
   );
 
   // Sort: active jobs first, then completed

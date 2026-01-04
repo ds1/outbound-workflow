@@ -502,13 +502,28 @@ export function FindLeadsDialog({
   };
 
   const handleClose = () => {
-    // Don't remove the job - let user dismiss from minimized view
-    // Just close the dialog
+    // If job is done, user must explicitly dismiss - don't allow closing via escape/outside click
     if (currentJobId && currentJob?.status === "done") {
-      // Keep job in store but minimize it so user can see results
-      minimizeJob(currentJobId);
+      // Stay open - user must click Dismiss button
+      return;
     }
+
+    // If job is running, minimize instead of closing
+    if (currentJobId && (currentJob?.status === "searching" || currentJob?.status === "scraping")) {
+      minimizeJob(currentJobId);
+      onClose();
+      return;
+    }
+
     setCurrentJobId(null);
+    onClose();
+  };
+
+  const handleDismiss = () => {
+    if (currentJobId) {
+      removeJob(currentJobId);
+      setCurrentJobId(null);
+    }
     onClose();
   };
 
@@ -925,13 +940,7 @@ export function FindLeadsDialog({
                   <Minimize2 className="mr-2 h-4 w-4" />
                   Minimize
                 </Button>
-                <Button onClick={() => {
-                  if (currentJobId) {
-                    removeJob(currentJobId);
-                    setCurrentJobId(null);
-                  }
-                  onClose();
-                }}>
+                <Button onClick={handleDismiss}>
                   Dismiss
                 </Button>
               </div>
