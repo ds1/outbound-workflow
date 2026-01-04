@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { useJobsStore, type Job } from "@/stores/useJobsStore";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -201,17 +202,23 @@ function MinimizedJobCard({ job, onMaximize, onDismiss }: MinimizedJobCardProps)
 }
 
 export function MinimizedJobs() {
+  const [mounted, setMounted] = useState(false);
   const jobs = useJobsStore((state) => state.jobs);
   const minimizedJobs = useJobsStore((state) => state.minimizedJobs);
   const maximizeJob = useJobsStore((state) => state.maximizeJob);
   const removeJob = useJobsStore((state) => state.removeJob);
 
-  // Get minimized jobs
-  const minimizedJobsList = Array.from(jobs.values()).filter(
-    (job) => minimizedJobs.has(job.id)
-  );
+  // Prevent hydration mismatch - only render after client mount
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
-  if (minimizedJobsList.length === 0) return null;
+  // Get minimized jobs
+  const minimizedJobsList = mounted
+    ? Array.from(jobs.values()).filter((job) => minimizedJobs.has(job.id))
+    : [];
+
+  if (!mounted || minimizedJobsList.length === 0) return null;
 
   return (
     <div className="fixed bottom-4 right-4 z-50 flex flex-col gap-2">

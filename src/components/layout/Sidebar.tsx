@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -34,14 +35,22 @@ const navigation = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  const [mounted, setMounted] = useState(false);
   const jobs = useJobsStore((state) => state.jobs);
   const minimizedJobs = useJobsStore((state) => state.minimizedJobs);
   const maximizeJob = useJobsStore((state) => state.maximizeJob);
 
+  // Prevent hydration mismatch - only render jobs after client mount
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   // Get active or minimized jobs (including completed ones that haven't been dismissed)
-  const activeJobs = Array.from(jobs.values()).filter(
-    (job) => minimizedJobs.has(job.id) || job.status === "searching" || job.status === "scraping" || job.status === "done"
-  );
+  const activeJobs = mounted
+    ? Array.from(jobs.values()).filter(
+        (job) => minimizedJobs.has(job.id) || job.status === "searching" || job.status === "scraping" || job.status === "done"
+      )
+    : [];
 
   // Sort: active jobs first, then completed
   activeJobs.sort((a, b) => {
