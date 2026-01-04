@@ -22,14 +22,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
@@ -46,6 +38,7 @@ import {
   ArrowLeft,
   Globe,
   Circle,
+  UserPlus,
 } from "lucide-react";
 import type { Domain } from "@/types/database";
 import { extractKeywords } from "@/lib/lead-targets";
@@ -71,8 +64,9 @@ interface ScrapedContact {
 
 interface ScrapeProgress {
   company: string;
+  url: string;
   status: "pending" | "scraping" | "done" | "error";
-  contactsFound: number;
+  leadsAdded: number;
   error?: string;
 }
 
@@ -89,7 +83,7 @@ interface FindLeadsDialogProps {
   showDomainSelector?: boolean;
 }
 
-type Phase = "strategy" | "setup" | "searching" | "scraping" | "results";
+type Phase = "strategy" | "setup" | "searching" | "scraping" | "done";
 
 const STRATEGY_ICONS = {
   "domain-upgrade": ArrowUpCircle,
@@ -113,14 +107,15 @@ export function FindLeadsDialog({
   const [customUrl, setCustomUrl] = useState("");
   const [phase, setPhase] = useState<Phase>("strategy");
   const [progress, setProgress] = useState<ScrapeProgress[]>([]);
-  const [contacts, setContacts] = useState<ScrapedContact[]>([]);
-  const [selectedContacts, setSelectedContacts] = useState<Set<string>>(new Set());
-  const [isImporting, setIsImporting] = useState(false);
 
   // Search progress state
   const [searchQueries, setSearchQueries] = useState<SearchQueryProgress[]>([]);
   const [totalDomainsFound, setTotalDomainsFound] = useState(0);
   const [uniqueDomains, setUniqueDomains] = useState<Set<string>>(new Set());
+
+  // Summary stats for done phase
+  const [totalLeadsAdded, setTotalLeadsAdded] = useState(0);
+  const [leadsWithPhone, setLeadsWithPhone] = useState(0);
 
   // Hooks
   const { data: domains = [] } = useDomains();
@@ -143,14 +138,14 @@ export function FindLeadsDialog({
       setPhase("strategy");
       setSelectedStrategy(null);
       setProgress([]);
-      setContacts([]);
-      setSelectedContacts(new Set());
       setCustomUrl("");
       setTargets([]);
       setSelectedTargets(new Set());
       setSearchQueries([]);
       setTotalDomainsFound(0);
       setUniqueDomains(new Set());
+      setTotalLeadsAdded(0);
+      setLeadsWithPhone(0);
       if (!showDomainSelector) {
         setSelectedDomain(initialDomain || null);
       }
@@ -241,12 +236,10 @@ export function FindLeadsDialog({
             const searchData = (await searchResponse.json()) as RunQueryResponse;
 
             // Count new unique domains
-            let newDomains = 0;
             for (const result of searchData.results) {
               if (!seenDomains.has(result.domain)) {
                 seenDomains.add(result.domain);
                 allResults.push(result);
-                newDomains++;
               }
             }
 
@@ -337,18 +330,29 @@ export function FindLeadsDialog({
       return;
     }
 
+    if (!selectedDomain) {
+      toast.error("No domain selected");
+      return;
+    }
+
     setPhase("scraping");
+    setTotalLeadsAdded(0);
+    setLeadsWithPhone(0);
+
     const selectedCompanies = targets.filter((t) => selectedTargets.has(t.url));
     const newProgress: ScrapeProgress[] = selectedCompanies.map((c) => ({
       company: c.name,
+      url: c.url,
       status: "pending" as const,
-      contactsFound: 0,
+      leadsAdded: 0,
     }));
     setProgress(newProgress);
 
-    const allContacts: ScrapedContact[] = [];
+    let totalAdded = 0;
+    let withPhone = 0;
+    const seenEmails = new Set<string>();
 
-    // Scrape each company sequentially
+    // Scrape each company and add leads immediately
     for (let i = 0; i < selectedCompanies.length; i++) {
       const company = selectedCompanies[i];
 
@@ -378,23 +382,72 @@ export function FindLeadsDialog({
 
         const data = await response.json();
 
-        if (data.success && data.contacts) {
-          // Add company name to contacts
-          const companyContacts = data.contacts.map((c: ScrapedContact) => ({
-            ...c,
-            company: company.name,
-          }));
-          allContacts.push(...companyContacts);
+        if (data.success && data.contacts && data.contacts.length > 0) {
+          // Filter valid contacts (must have email, skip careers@, skip duplicates)
+          const validContacts = data.contacts.filter((c: ScrapedContact) => {
+            if (!c.email) return false;
+            const emailLower = c.email.toLowerCase();
+            if (emailLower.startsWith("careers@")) return false;
+            if (emailLower.startsWith("jobs@")) return false;
+            if (emailLower.startsWith("hr@")) return false;
+            if (emailLower.startsWith("recruiting@")) return false;
+            if (seenEmails.has(emailLower)) return false;
+            seenEmails.add(emailLower);
+            return true;
+          });
 
+          if (validContacts.length > 0) {
+            // Create leads immediately
+            const leadsToCreate = validContacts.map((c: ScrapedContact) => ({
+              email: c.email || null,
+              phone: c.phone || null,
+              first_name: null,
+              last_name: null,
+              company_name: company.name,
+              domain_id: selectedDomain.id,
+              source: "scraped" as const,
+              status: "new" as const,
+            }));
+
+            try {
+              await bulkCreateLeads.mutateAsync(leadsToCreate);
+              totalAdded += validContacts.length;
+              withPhone += validContacts.filter((c: ScrapedContact) => c.phone).length;
+              setTotalLeadsAdded(totalAdded);
+              setLeadsWithPhone(withPhone);
+
+              setProgress((prev) =>
+                prev.map((p, idx) =>
+                  idx === i
+                    ? { ...p, status: "done" as const, leadsAdded: validContacts.length }
+                    : p
+                )
+              );
+            } catch (err) {
+              console.error("Failed to create leads:", err);
+              setProgress((prev) =>
+                prev.map((p, idx) =>
+                  idx === i
+                    ? { ...p, status: "error" as const, error: "Failed to save leads" }
+                    : p
+                )
+              );
+            }
+          } else {
+            // No valid contacts found
+            setProgress((prev) =>
+              prev.map((p, idx) =>
+                idx === i ? { ...p, status: "done" as const, leadsAdded: 0 } : p
+              )
+            );
+          }
+        } else {
+          // No contacts in response
           setProgress((prev) =>
             prev.map((p, idx) =>
-              idx === i
-                ? { ...p, status: "done" as const, contactsFound: companyContacts.length }
-                : p
+              idx === i ? { ...p, status: "done" as const, leadsAdded: 0 } : p
             )
           );
-        } else {
-          throw new Error(data.error || "Unknown error");
         }
       } catch (err) {
         setProgress((prev) =>
@@ -416,121 +469,12 @@ export function FindLeadsDialog({
       }
     }
 
-    // Deduplicate contacts and sort by priority (phone+email first)
-    const deduped = deduplicateContacts(allContacts);
-    const sorted = sortContactsByPriority(deduped);
-    setContacts(sorted);
+    setPhase("done");
 
-    // Auto-select contacts with email (skip careers@ type emails)
-    const autoSelected = new Set<string>();
-    sorted.forEach((c) => {
-      if (c.email && !c.email.toLowerCase().startsWith("careers@")) {
-        autoSelected.add(getContactKey(c));
-      }
-    });
-    setSelectedContacts(autoSelected);
-
-    setPhase("results");
-  };
-
-  const deduplicateContacts = (contacts: ScrapedContact[]): ScrapedContact[] => {
-    const seen = new Map<string, ScrapedContact>();
-    for (const contact of contacts) {
-      const key = contact.email || contact.phone || "";
-      if (key && !seen.has(key)) {
-        seen.set(key, contact);
-      } else if (key && seen.has(key)) {
-        // Merge: prefer contact with more info
-        const existing = seen.get(key)!;
-        if (!existing.phone && contact.phone) {
-          seen.set(key, { ...existing, phone: contact.phone });
-        }
-      }
-    }
-    return Array.from(seen.values());
-  };
-
-  const sortContactsByPriority = (contacts: ScrapedContact[]): ScrapedContact[] => {
-    return contacts.sort((a, b) => {
-      // Contacts with both email AND phone come first
-      const aScore = (a.email ? 1 : 0) + (a.phone ? 2 : 0);
-      const bScore = (b.email ? 1 : 0) + (b.phone ? 2 : 0);
-      return bScore - aScore;
-    });
-  };
-
-  const getContactKey = (contact: ScrapedContact): string => {
-    return contact.email || contact.phone || `${contact.company}-${contact.source_url}`;
-  };
-
-  const toggleContact = (contact: ScrapedContact) => {
-    const key = getContactKey(contact);
-    const newSelected = new Set(selectedContacts);
-    if (newSelected.has(key)) {
-      newSelected.delete(key);
+    if (totalAdded > 0) {
+      toast.success(`Added ${totalAdded} leads (${withPhone} with phone numbers)`);
     } else {
-      newSelected.add(key);
-    }
-    setSelectedContacts(newSelected);
-  };
-
-  const selectAllWithPhone = () => {
-    const withPhone = new Set<string>();
-    contacts.forEach((c) => {
-      if (c.phone && c.email) {
-        withPhone.add(getContactKey(c));
-      }
-    });
-    setSelectedContacts(withPhone);
-  };
-
-  const selectAll = () => {
-    const all = new Set<string>();
-    contacts.forEach((c) => {
-      if (c.email && !c.email.toLowerCase().startsWith("careers@")) {
-        all.add(getContactKey(c));
-      }
-    });
-    setSelectedContacts(all);
-  };
-
-  const importSelectedLeads = async () => {
-    if (!selectedDomain) {
-      toast.error("No domain selected");
-      return;
-    }
-
-    const selectedList = contacts.filter((c) => selectedContacts.has(getContactKey(c)));
-    if (selectedList.length === 0) {
-      toast.error("No contacts selected");
-      return;
-    }
-
-    setIsImporting(true);
-
-    try {
-      const leadsToCreate = selectedList.map((c) => ({
-        email: c.email || null,
-        phone: c.phone || null,
-        first_name: null,
-        last_name: null,
-        company_name: c.company || null,
-        domain_id: selectedDomain.id,
-        source: "scraped" as const,
-        status: "new" as const,
-      }));
-
-      await bulkCreateLeads.mutateAsync(leadsToCreate);
-
-      const withPhone = selectedList.filter((c) => c.phone && c.email).length;
-      toast.success(
-        `Imported ${selectedList.length} leads (${withPhone} with phone for multi-channel outreach)`
-      );
-      onClose();
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to import leads");
-    } finally {
-      setIsImporting(false);
+      toast.info("No contacts found from the selected websites.");
     }
   };
 
@@ -545,16 +489,10 @@ export function FindLeadsDialog({
   };
 
   // Computed values
-  const contactsWithPhone = contacts.filter((c) => c.phone && c.email);
-  const contactsEmailOnly = contacts.filter((c) => c.email && !c.phone);
-  const selectedCount = selectedContacts.size;
-  const selectedWithPhone = contacts.filter(
-    (c) => c.phone && c.email && selectedContacts.has(getContactKey(c))
-  ).length;
-
-  // Search progress computed values
   const completedQueries = searchQueries.filter((q) => q.status === "done" || q.status === "error").length;
   const currentQuery = searchQueries.find((q) => q.status === "searching");
+  const scrapingComplete = progress.filter((p) => p.status === "done" || p.status === "error").length;
+  const currentScraping = progress.find((p) => p.status === "scraping");
 
   // Get current strategy info
   const currentStrategy = selectedStrategy
@@ -563,16 +501,18 @@ export function FindLeadsDialog({
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-3xl max-h-[85vh] flex flex-col">
-        <DialogHeader>
+      <DialogContent className="max-w-2xl max-h-[80vh] flex flex-col overflow-hidden">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle className="flex items-center gap-2">
             <Search className="h-5 w-5" />
-            {phase === "results"
-              ? `Found ${contacts.length} contacts`
+            {phase === "done"
+              ? `Added ${totalLeadsAdded} Leads`
               : phase === "strategy"
               ? "Choose Lead Strategy"
               : phase === "searching"
               ? "Searching for Companies"
+              : phase === "scraping"
+              ? "Finding Contacts"
               : `Find Leads${selectedDomain ? ` for ${selectedDomain.full_domain}` : ""}`}
           </DialogTitle>
           <DialogDescription>
@@ -589,15 +529,15 @@ export function FindLeadsDialog({
                 {currentStrategy.shortDescription}
               </span>
             )}
-            {phase === "scraping" && "Scraping websites for contact information..."}
-            {phase === "results" && "Review and import the contacts found"}
+            {phase === "scraping" && "Scraping websites and adding contacts to your leads..."}
+            {phase === "done" && "Lead discovery complete. View your new leads in the Leads page."}
           </DialogDescription>
         </DialogHeader>
 
-        <ScrollArea className="flex-1 -mx-6 px-6">
+        <div className="flex-1 overflow-y-auto -mx-6 px-6">
           {/* Strategy Selection Phase */}
           {phase === "strategy" && (
-            <div className="space-y-6">
+            <div className="space-y-6 py-2">
               {/* Domain Selector (for Leads page) */}
               {showDomainSelector && (
                 <div className="space-y-2">
@@ -670,7 +610,7 @@ export function FindLeadsDialog({
 
           {/* Searching Phase - Detailed Progress */}
           {phase === "searching" && (
-            <div className="space-y-6">
+            <div className="space-y-6 py-2">
               {/* Summary Stats */}
               <div className="grid grid-cols-3 gap-4">
                 <div className="p-3 bg-muted/50 rounded-lg text-center">
@@ -694,7 +634,7 @@ export function FindLeadsDialog({
                     <Loader2 className="h-4 w-4 animate-spin text-primary" />
                     <span className="text-sm font-medium">Searching:</span>
                   </div>
-                  <p className="text-sm text-muted-foreground mt-1 font-mono">
+                  <p className="text-sm text-muted-foreground mt-1 font-mono break-all">
                     {currentQuery.query}
                   </p>
                 </div>
@@ -703,7 +643,7 @@ export function FindLeadsDialog({
               {/* Query List */}
               <div className="space-y-2">
                 <Label className="text-sm">Search Queries</Label>
-                <div className="space-y-1">
+                <div className="space-y-1 max-h-[200px] overflow-y-auto">
                   {searchQueries.map((q, i) => (
                     <div
                       key={i}
@@ -718,28 +658,23 @@ export function FindLeadsDialog({
                       }`}
                     >
                       {q.status === "pending" && (
-                        <Circle className="h-4 w-4 text-muted-foreground" />
+                        <Circle className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                       )}
                       {q.status === "searching" && (
-                        <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                        <Loader2 className="h-4 w-4 animate-spin text-primary flex-shrink-0" />
                       )}
                       {q.status === "done" && (
-                        <CheckCircle2 className="h-4 w-4 text-green-500" />
+                        <CheckCircle2 className="h-4 w-4 text-green-500 flex-shrink-0" />
                       )}
                       {q.status === "error" && (
-                        <XCircle className="h-4 w-4 text-red-500" />
+                        <XCircle className="h-4 w-4 text-red-500 flex-shrink-0" />
                       )}
-                      <span className="flex-1 font-mono text-xs break-all">
+                      <span className="flex-1 font-mono text-xs truncate">
                         {q.query}
                       </span>
                       {q.status === "done" && (
-                        <Badge variant="secondary" className="text-xs">
-                          {q.resultCount} found
-                        </Badge>
-                      )}
-                      {q.status === "error" && (
-                        <Badge variant="destructive" className="text-xs">
-                          failed
+                        <Badge variant="secondary" className="text-xs flex-shrink-0">
+                          {q.resultCount}
                         </Badge>
                       )}
                     </div>
@@ -751,7 +686,7 @@ export function FindLeadsDialog({
 
           {/* Setup Phase */}
           {phase === "setup" && (
-            <div className="space-y-6">
+            <div className="space-y-4 py-2">
               {/* Search Summary (for web search strategies) */}
               {searchQueries.length > 0 && (
                 <div className="p-3 bg-muted/50 rounded-lg border">
@@ -776,21 +711,11 @@ export function FindLeadsDialog({
                 </div>
               )}
 
-              {/* Sales Pitch for Strategy */}
-              {currentStrategy && (
-                <div className="p-3 bg-muted/50 rounded-lg border">
-                  <p className="text-sm font-medium">Sales Talking Point:</p>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    {currentStrategy.salesPitch}
-                  </p>
-                </div>
-              )}
-
               {/* Target Companies */}
               {targets.length > 0 && (
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <Label>Companies Found ({targets.length})</Label>
+                    <Label>Companies to Scrape ({selectedTargets.size} selected)</Label>
                     <Button
                       variant="ghost"
                       size="sm"
@@ -805,7 +730,7 @@ export function FindLeadsDialog({
                       {selectedTargets.size === targets.length ? "Deselect All" : "Select All"}
                     </Button>
                   </div>
-                  <div className="border rounded-md max-h-[250px] overflow-y-auto">
+                  <div className="border rounded-md max-h-[200px] overflow-y-auto">
                     {targets.map((target) => (
                       <div
                         key={target.url}
@@ -817,13 +742,8 @@ export function FindLeadsDialog({
                           className="mt-1"
                         />
                         <div className="flex-1 min-w-0">
-                          <p className="font-medium text-sm break-words">{target.name}</p>
-                          <p className="text-xs text-muted-foreground break-all">{target.url}</p>
-                          {target.snippet && (
-                            <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
-                              {target.snippet}
-                            </p>
-                          )}
+                          <p className="font-medium text-sm truncate">{target.name}</p>
+                          <p className="text-xs text-muted-foreground truncate">{target.url}</p>
                         </div>
                         <Badge variant="outline" className="text-xs shrink-0">
                           {target.category}
@@ -862,141 +782,133 @@ export function FindLeadsDialog({
 
           {/* Scraping Phase */}
           {phase === "scraping" && (
-            <div className="space-y-3">
-              {progress.map((p, i) => (
-                <div
-                  key={i}
-                  className="flex items-center gap-3 px-3 py-2 border rounded-md"
-                >
-                  {p.status === "pending" && (
-                    <Circle className="h-5 w-5 text-muted-foreground" />
-                  )}
-                  {p.status === "scraping" && (
-                    <Loader2 className="h-5 w-5 animate-spin text-primary" />
-                  )}
-                  {p.status === "done" && (
-                    <CheckCircle2 className="h-5 w-5 text-green-500" />
-                  )}
-                  {p.status === "error" && <XCircle className="h-5 w-5 text-red-500" />}
-                  <span className="flex-1 break-words">{p.company}</span>
-                  {p.status === "done" && (
-                    <span className="text-sm text-muted-foreground">
-                      {p.contactsFound} contacts
-                    </span>
-                  )}
-                  {p.status === "error" && (
-                    <span className="text-sm text-red-500">{p.error}</span>
-                  )}
+            <div className="space-y-4 py-2">
+              {/* Progress Stats */}
+              <div className="grid grid-cols-3 gap-4">
+                <div className="p-3 bg-muted/50 rounded-lg text-center">
+                  <p className="text-2xl font-bold">{scrapingComplete}/{progress.length}</p>
+                  <p className="text-xs text-muted-foreground">Sites Scraped</p>
                 </div>
-              ))}
+                <div className="p-3 bg-muted/50 rounded-lg text-center">
+                  <p className="text-2xl font-bold text-green-600">{totalLeadsAdded}</p>
+                  <p className="text-xs text-muted-foreground">Leads Added</p>
+                </div>
+                <div className="p-3 bg-muted/50 rounded-lg text-center">
+                  <p className="text-2xl font-bold">{leadsWithPhone}</p>
+                  <p className="text-xs text-muted-foreground">With Phone</p>
+                </div>
+              </div>
+
+              {/* Current Scraping */}
+              {currentScraping && (
+                <div className="p-3 border rounded-lg bg-primary/5 border-primary/20">
+                  <div className="flex items-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                    <span className="text-sm font-medium">Scraping:</span>
+                  </div>
+                  <p className="text-sm text-muted-foreground mt-1 truncate">
+                    {currentScraping.company}
+                  </p>
+                </div>
+              )}
+
+              {/* Progress List */}
+              <div className="space-y-1 max-h-[250px] overflow-y-auto">
+                {progress.map((p, i) => (
+                  <div
+                    key={i}
+                    className={`flex items-center gap-3 px-3 py-2 rounded-md ${
+                      p.status === "scraping" ? "bg-primary/5" : ""
+                    }`}
+                  >
+                    {p.status === "pending" && (
+                      <Circle className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                    )}
+                    {p.status === "scraping" && (
+                      <Loader2 className="h-4 w-4 animate-spin text-primary flex-shrink-0" />
+                    )}
+                    {p.status === "done" && (
+                      <CheckCircle2 className="h-4 w-4 text-green-500 flex-shrink-0" />
+                    )}
+                    {p.status === "error" && (
+                      <XCircle className="h-4 w-4 text-red-500 flex-shrink-0" />
+                    )}
+                    <span className="flex-1 text-sm truncate">{p.company}</span>
+                    {p.status === "done" && p.leadsAdded > 0 && (
+                      <Badge variant="default" className="text-xs bg-green-600">
+                        <UserPlus className="h-3 w-3 mr-1" />
+                        {p.leadsAdded}
+                      </Badge>
+                    )}
+                    {p.status === "done" && p.leadsAdded === 0 && (
+                      <span className="text-xs text-muted-foreground">No contacts</span>
+                    )}
+                    {p.status === "error" && (
+                      <span className="text-xs text-red-500">{p.error}</span>
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 
-          {/* Results Phase */}
-          {phase === "results" && (
-            <div className="space-y-4">
-              {/* Priority Section: With Phone */}
-              {contactsWithPhone.length > 0 && (
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <Phone className="h-4 w-4 text-green-500" />
-                    <Label className="font-semibold">
-                      With Phone ({contactsWithPhone.length}) - Best for email + voicemail
-                    </Label>
-                  </div>
-                  <div className="border rounded-md">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead className="w-[40px]"></TableHead>
-                          <TableHead>Email</TableHead>
-                          <TableHead>Company</TableHead>
-                          <TableHead>Phone</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {contactsWithPhone.map((contact, i) => (
-                          <TableRow
-                            key={i}
-                            className="cursor-pointer"
-                            onClick={() => toggleContact(contact)}
-                          >
-                            <TableCell>
-                              <Checkbox
-                                checked={selectedContacts.has(getContactKey(contact))}
-                              />
-                            </TableCell>
-                            <TableCell className="font-mono text-sm">
-                              {contact.email}
-                            </TableCell>
-                            <TableCell>{contact.company}</TableCell>
-                            <TableCell className="font-mono text-sm">
-                              {contact.phone}
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-                </div>
-              )}
+          {/* Done Phase */}
+          {phase === "done" && (
+            <div className="space-y-6 py-4">
+              {/* Summary */}
+              <div className="text-center py-6">
+                {totalLeadsAdded > 0 ? (
+                  <>
+                    <CheckCircle2 className="h-16 w-16 text-green-500 mx-auto mb-4" />
+                    <h3 className="text-2xl font-bold">{totalLeadsAdded} Leads Added</h3>
+                    <p className="text-muted-foreground mt-2">
+                      {leadsWithPhone > 0 && (
+                        <span className="flex items-center justify-center gap-2">
+                          <Phone className="h-4 w-4" />
+                          {leadsWithPhone} with phone numbers for multi-channel outreach
+                        </span>
+                      )}
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <XCircle className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+                    <h3 className="text-xl font-semibold">No Contacts Found</h3>
+                    <p className="text-muted-foreground mt-2">
+                      The selected websites didn&apos;t have visible contact information.
+                      <br />
+                      Try a different strategy or add company websites directly.
+                    </p>
+                  </>
+                )}
+              </div>
 
-              {/* Email Only Section */}
-              {contactsEmailOnly.length > 0 && (
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <Mail className="h-4 w-4 text-blue-500" />
-                    <Label>Email Only ({contactsEmailOnly.length})</Label>
+              {/* Scrape Summary */}
+              <div className="border rounded-lg divide-y">
+                {progress.map((p, i) => (
+                  <div key={i} className="flex items-center gap-3 px-4 py-2">
+                    {p.status === "done" && p.leadsAdded > 0 ? (
+                      <CheckCircle2 className="h-4 w-4 text-green-500 flex-shrink-0" />
+                    ) : p.status === "error" ? (
+                      <XCircle className="h-4 w-4 text-red-500 flex-shrink-0" />
+                    ) : (
+                      <Circle className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                    )}
+                    <span className="flex-1 text-sm truncate">{p.company}</span>
+                    {p.leadsAdded > 0 && (
+                      <Badge variant="secondary" className="text-xs">
+                        {p.leadsAdded} leads
+                      </Badge>
+                    )}
                   </div>
-                  <div className="border rounded-md">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead className="w-[40px]"></TableHead>
-                          <TableHead>Email</TableHead>
-                          <TableHead>Company</TableHead>
-                          <TableHead>Source</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {contactsEmailOnly.map((contact, i) => (
-                          <TableRow
-                            key={i}
-                            className="cursor-pointer"
-                            onClick={() => toggleContact(contact)}
-                          >
-                            <TableCell>
-                              <Checkbox
-                                checked={selectedContacts.has(getContactKey(contact))}
-                              />
-                            </TableCell>
-                            <TableCell className="font-mono text-sm">
-                              {contact.email}
-                            </TableCell>
-                            <TableCell>{contact.company}</TableCell>
-                            <TableCell className="text-xs text-muted-foreground truncate max-w-[150px]">
-                              {new URL(contact.source_url).hostname}
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-                </div>
-              )}
-
-              {contacts.length === 0 && (
-                <div className="text-center py-8 text-muted-foreground">
-                  <p>No contacts found from the scraped websites.</p>
-                  <p className="text-sm">Try adding different target URLs.</p>
-                </div>
-              )}
+                ))}
+              </div>
             </div>
           )}
-        </ScrollArea>
+        </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between pt-4 border-t mt-4">
+        <div className="flex items-center justify-between pt-4 border-t mt-2 flex-shrink-0">
           {phase === "strategy" && (
             <>
               <Button variant="ghost" onClick={onClose}>
@@ -1031,7 +943,7 @@ export function FindLeadsDialog({
                 disabled={selectedTargets.size === 0 || !selectedDomain}
               >
                 <Search className="mr-2 h-4 w-4" />
-                Start Scraping ({selectedTargets.size} sites)
+                Scrape {selectedTargets.size} Sites
               </Button>
             </>
           )}
@@ -1039,43 +951,24 @@ export function FindLeadsDialog({
           {phase === "scraping" && (
             <>
               <div className="text-sm text-muted-foreground">
-                {progress.filter((p) => p.status === "done").length} of {progress.length} complete
+                {scrapingComplete} of {progress.length} complete
               </div>
-              <Button variant="ghost" onClick={onClose}>
-                Cancel
-              </Button>
+              <div className="flex items-center gap-2 text-sm">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Adding leads as found...
+              </div>
             </>
           )}
 
-          {phase === "results" && (
+          {phase === "done" && (
             <>
-              <div className="flex items-center gap-4">
-                <span className="text-sm text-muted-foreground">
-                  Selected: {selectedCount} of {contacts.length}
-                  {selectedWithPhone > 0 && ` (${selectedWithPhone} with phone)`}
-                </span>
-                <div className="flex gap-2">
-                  <Button variant="outline" size="sm" onClick={selectAllWithPhone}>
-                    Phone Only
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={selectAll}>
-                    All Emails
-                  </Button>
-                </div>
-              </div>
-              <div className="flex gap-2">
-                <Button variant="ghost" onClick={() => setPhase("setup")}>
-                  Back
-                </Button>
-                <Button onClick={importSelectedLeads} disabled={selectedCount === 0 || isImporting}>
-                  {isImporting ? (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  ) : (
-                    <Plus className="mr-2 h-4 w-4" />
-                  )}
-                  Import {selectedCount} Leads
-                </Button>
-              </div>
+              <Button variant="ghost" onClick={goBackToStrategy}>
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Find More
+              </Button>
+              <Button onClick={onClose}>
+                Done
+              </Button>
             </>
           )}
         </div>
