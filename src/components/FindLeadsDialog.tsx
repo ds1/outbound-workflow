@@ -502,10 +502,13 @@ export function FindLeadsDialog({
   };
 
   const handleClose = () => {
+    // Don't remove the job - let user dismiss from minimized view
+    // Just close the dialog
     if (currentJobId && currentJob?.status === "done") {
-      removeJob(currentJobId);
-      setCurrentJobId(null);
+      // Keep job in store but minimize it so user can see results
+      minimizeJob(currentJobId);
     }
+    setCurrentJobId(null);
     onClose();
   };
 
@@ -522,7 +525,7 @@ export function FindLeadsDialog({
     ? (currentJob.sitesComplete / currentJob.sitesTotal) * 100
     : 0;
 
-  const canMinimize = phase === "searching" || phase === "scraping";
+  const canMinimize = phase === "searching" || phase === "scraping" || phase === "done";
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && handleClose()}>
@@ -917,9 +920,21 @@ export function FindLeadsDialog({
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Find More
               </Button>
-              <Button onClick={handleClose}>
-                Done
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button variant="outline" onClick={handleMinimize}>
+                  <Minimize2 className="mr-2 h-4 w-4" />
+                  Minimize
+                </Button>
+                <Button onClick={() => {
+                  if (currentJobId) {
+                    removeJob(currentJobId);
+                    setCurrentJobId(null);
+                  }
+                  onClose();
+                }}>
+                  Dismiss
+                </Button>
+              </div>
             </>
           )}
         </div>

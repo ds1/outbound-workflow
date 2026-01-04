@@ -38,10 +38,19 @@ export function Sidebar() {
   const minimizedJobs = useJobsStore((state) => state.minimizedJobs);
   const maximizeJob = useJobsStore((state) => state.maximizeJob);
 
-  // Get active or recently completed jobs
+  // Get active or minimized jobs (including completed ones that haven't been dismissed)
   const activeJobs = Array.from(jobs.values()).filter(
     (job) => minimizedJobs.has(job.id) || job.status === "searching" || job.status === "scraping"
   );
+
+  // Sort: active jobs first, then completed
+  activeJobs.sort((a, b) => {
+    const aActive = a.status === "searching" || a.status === "scraping";
+    const bActive = b.status === "searching" || b.status === "scraping";
+    if (aActive && !bActive) return -1;
+    if (!aActive && bActive) return 1;
+    return 0;
+  });
 
   return (
     <div className="flex h-full w-64 flex-col bg-gray-900">
@@ -102,28 +111,37 @@ export function Sidebar() {
                 <button
                   key={job.id}
                   onClick={() => maximizeJob(job.id)}
-                  className="w-full text-left p-2 rounded-lg bg-gray-800/50 hover:bg-gray-800 transition-colors group"
+                  className={`w-full text-left p-2 rounded-lg transition-colors group ${
+                    isDone && job.totalLeadsAdded > 0
+                      ? "bg-green-900/30 hover:bg-green-900/50 border border-green-800/50"
+                      : "bg-gray-800/50 hover:bg-gray-800"
+                  }`}
                 >
                   <div className="flex items-center gap-2 mb-1">
                     {(isSearching || isScraping) && (
                       <Loader2 className="h-3 w-3 animate-spin text-blue-400 flex-shrink-0" />
                     )}
                     {isDone && (
-                      <CheckCircle2 className="h-3 w-3 text-green-400 flex-shrink-0" />
+                      <CheckCircle2 className={`h-3 w-3 flex-shrink-0 ${
+                        job.totalLeadsAdded > 0 ? "text-green-400" : "text-gray-500"
+                      }`} />
                     )}
                     <span className="text-xs text-gray-300 truncate flex-1">
-                      {job.domainName}
+                      {isDone && job.totalLeadsAdded > 0
+                        ? `${job.totalLeadsAdded} leads added`
+                        : job.domainName
+                      }
                     </span>
                     <Maximize2 className="h-3 w-3 text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity" />
                   </div>
-                  <Progress value={progressPercent} className="h-1" />
+                  {!isDone && <Progress value={progressPercent} className="h-1" />}
                   <div className="flex items-center justify-between mt-1">
-                    <span className="text-[10px] text-gray-500">
+                    <span className="text-[10px] text-gray-500 truncate">
                       {isSearching && `Searching...`}
                       {isScraping && `${job.sitesComplete}/${job.sitesTotal} sites`}
-                      {isDone && `Done`}
+                      {isDone && job.domainName}
                     </span>
-                    {job.totalLeadsAdded > 0 && (
+                    {!isDone && job.totalLeadsAdded > 0 && (
                       <span className="text-[10px] text-green-400">
                         +{job.totalLeadsAdded}
                       </span>
