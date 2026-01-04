@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
 import { useDomains, useCreateDomain, useUpdateDomain, useDeleteDomain } from "@/hooks/useDomains";
+import { useJobsStore, type LeadScrapingJob } from "@/stores/useJobsStore";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -35,8 +36,31 @@ export default function DomainsPage() {
   const [editingDomain, setEditingDomain] = useState<Domain | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [findLeadsFor, setFindLeadsFor] = useState<Domain | null>(null);
+  const [resumeJobId, setResumeJobId] = useState<string | null>(null);
 
   const { data: domains = [], isLoading, error } = useDomains();
+
+  // Listen for jobs that should be reopened
+  const reopenJobId = useJobsStore((state) => state.reopenJobId);
+  const jobs = useJobsStore((state) => state.jobs);
+  const clearReopenJob = useJobsStore((state) => state.clearReopenJob);
+
+  useEffect(() => {
+    if (reopenJobId) {
+      const job = jobs.get(reopenJobId) as LeadScrapingJob | undefined;
+      if (job) {
+        // Find the domain by matching the job's domainName
+        const domain = domains.find(
+          (d) => d.full_domain === job.domainName || d.name === job.domainName
+        );
+        if (domain) {
+          setFindLeadsFor(domain);
+          setResumeJobId(reopenJobId);
+        }
+      }
+      clearReopenJob();
+    }
+  }, [reopenJobId, jobs, domains, clearReopenJob]);
   const createDomain = useCreateDomain();
   const updateDomain = useUpdateDomain();
   const deleteDomain = useDeleteDomain();
@@ -362,7 +386,11 @@ export default function DomainsPage() {
       <FindLeadsDialog
         domain={findLeadsFor}
         open={!!findLeadsFor}
-        onClose={() => setFindLeadsFor(null)}
+        onClose={() => {
+          setFindLeadsFor(null);
+          setResumeJobId(null);
+        }}
+        resumeJobId={resumeJobId || undefined}
       />
     </div>
   );

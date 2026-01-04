@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
 import { useLeads, useCreateLead, useUpdateLead, useDeleteLead, useBulkCreateLeads } from "@/hooks/useLeads";
 import { useDomains } from "@/hooks/useDomains";
+import { useJobsStore } from "@/stores/useJobsStore";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -61,11 +62,24 @@ export default function LeadsPage() {
     company_name?: string;
   }>>([]);
   const [showFindLeads, setShowFindLeads] = useState(false);
+  const [resumeJobId, setResumeJobId] = useState<string | null>(null);
 
   const { data: leads = [], isLoading, error } = useLeads(
     statusFilter !== "all" ? { status: statusFilter as ProspectStatus } : undefined
   );
   const { data: domains = [] } = useDomains();
+
+  // Listen for jobs that should be reopened
+  const reopenJobId = useJobsStore((state) => state.reopenJobId);
+  const clearReopenJob = useJobsStore((state) => state.clearReopenJob);
+
+  useEffect(() => {
+    if (reopenJobId) {
+      setShowFindLeads(true);
+      setResumeJobId(reopenJobId);
+      clearReopenJob();
+    }
+  }, [reopenJobId, clearReopenJob]);
   const createLead = useCreateLead();
   const updateLead = useUpdateLead();
   const deleteLead = useDeleteLead();
@@ -573,8 +587,12 @@ export default function LeadsPage() {
       {/* Find Leads Dialog */}
       <FindLeadsDialog
         open={showFindLeads}
-        onClose={() => setShowFindLeads(false)}
+        onClose={() => {
+          setShowFindLeads(false);
+          setResumeJobId(null);
+        }}
         showDomainSelector={true}
+        resumeJobId={resumeJobId || undefined}
       />
     </div>
   );

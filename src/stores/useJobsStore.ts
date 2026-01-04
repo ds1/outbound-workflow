@@ -39,6 +39,7 @@ export type Job = LeadScrapingJob;
 interface JobsState {
   jobs: Map<string, Job>;
   minimizedJobs: Set<string>;
+  reopenJobId: string | null; // Job ID that should be reopened in dialog
 
   // Actions
   addJob: (job: Job) => void;
@@ -46,6 +47,7 @@ interface JobsState {
   removeJob: (id: string) => void;
   minimizeJob: (id: string) => void;
   maximizeJob: (id: string) => void;
+  clearReopenJob: () => void;
   getJob: (id: string) => Job | undefined;
   getActiveJobs: () => Job[];
   isJobMinimized: (id: string) => boolean;
@@ -54,6 +56,7 @@ interface JobsState {
 export const useJobsStore = create<JobsState>((set, get) => ({
   jobs: new Map(),
   minimizedJobs: new Set(),
+  reopenJobId: null,
 
   addJob: (job) =>
     set((state) => {
@@ -92,8 +95,10 @@ export const useJobsStore = create<JobsState>((set, get) => ({
     set((state) => {
       const newMinimized = new Set(state.minimizedJobs);
       newMinimized.delete(id);
-      return { minimizedJobs: newMinimized };
+      return { minimizedJobs: newMinimized, reopenJobId: id };
     }),
+
+  clearReopenJob: () => set({ reopenJobId: null }),
 
   getJob: (id) => get().jobs.get(id),
 
