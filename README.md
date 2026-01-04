@@ -170,6 +170,15 @@ Find potential buyers using four intelligent search strategies:
 | **Emerging Startups** | Trendy/tech domains | Searches startup directories for early-stage companies |
 | **Market Leaders** | Industry domains | Targets established companies by keyword mapping |
 
+### Background Jobs
+
+Lead scraping runs as a background job with full progress tracking:
+- **Minimize** the dialog to continue working while scraping runs
+- **Active Jobs** section in sidebar shows progress
+- **Floating card** at bottom-right shows real-time status
+- **Success toast** persists after completion until dismissed
+- Click to **reopen** full dialog at any time
+
 See [User Guide](docs/USER_GUIDE.md) for detailed usage instructions.
 
 ## Scripts

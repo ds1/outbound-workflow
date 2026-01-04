@@ -129,17 +129,39 @@ During search, you'll see:
 - **Current query**: What's being searched
 - **Query list**: All queries with status and result counts
 
-### Scraping Leads
+### Real-Time Lead Discovery
 
-After search completes:
-1. Review the list of discovered companies
-2. Check the boxes next to companies you want to contact
-3. Click **Scrape Selected**
-4. The system visits each website and extracts:
-   - Company name
-   - Contact email addresses
-   - Phone numbers (if available)
-5. Extracted contacts are added to your Leads
+As sites are scraped, contacts are added to your Leads immediately:
+- Watch leads appear in real-time during scraping
+- Each site shows its scraping status (pending, scraping, done, error)
+- Contact info (emails, phone numbers) extracted automatically
+- Skip manually selecting companies - all discovered contacts are saved
+
+### Background Jobs
+
+Lead scraping runs as a background job, allowing you to continue working:
+
+**Minimizing the Dialog**
+- Click the **minimize button** (−) to shrink the dialog to a floating card
+- Continue using the app while scraping runs in the background
+- The floating card shows real-time progress at bottom-right of screen
+
+**Active Jobs in Sidebar**
+- The sidebar shows an **Active Jobs** section when jobs are running
+- See progress bars and status for each job
+- Click any job to reopen its full dialog
+
+**Job Completion**
+- Completed jobs show as a **success toast** that persists until dismissed
+- Green highlight indicates leads were found
+- **View Details** reopens the full results dialog
+- **View Leads** navigates directly to the Leads page
+- Click **X** to dismiss the notification
+
+**Multiple Jobs**
+- Run multiple lead-finding jobs simultaneously
+- Each job tracks its own progress independently
+- All jobs visible in sidebar and floating cards
 
 ---
 
