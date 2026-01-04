@@ -12,8 +12,14 @@ import {
   Phone,
   AlertTriangle,
   BarChart3,
+  Loader2,
+  Search,
+  CheckCircle2,
+  Maximize2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useJobsStore } from "@/stores/useJobsStore";
+import { Progress } from "@/components/ui/progress";
 
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
@@ -28,6 +34,14 @@ const navigation = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  const jobs = useJobsStore((state) => state.jobs);
+  const minimizedJobs = useJobsStore((state) => state.minimizedJobs);
+  const maximizeJob = useJobsStore((state) => state.maximizeJob);
+
+  // Get active or recently completed jobs
+  const activeJobs = Array.from(jobs.values()).filter(
+    (job) => minimizedJobs.has(job.id) || job.status === "searching" || job.status === "scraping"
+  );
 
   return (
     <div className="flex h-full w-64 flex-col bg-gray-900">
@@ -60,6 +74,67 @@ export function Sidebar() {
           );
         })}
       </nav>
+
+      {/* Active Jobs Section */}
+      {activeJobs.length > 0 && (
+        <div className="border-t border-gray-800 px-3 py-3">
+          <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+            Active Jobs
+          </div>
+          <div className="space-y-2">
+            {activeJobs.map((job) => {
+              if (job.type !== "lead-scraping") return null;
+
+              const isSearching = job.status === "searching";
+              const isScraping = job.status === "scraping";
+              const isDone = job.status === "done";
+
+              let progressPercent = 0;
+              if (isSearching && job.searchQueriesTotal > 0) {
+                progressPercent = (job.searchQueriesComplete / job.searchQueriesTotal) * 100;
+              } else if (isScraping && job.sitesTotal > 0) {
+                progressPercent = (job.sitesComplete / job.sitesTotal) * 100;
+              } else if (isDone) {
+                progressPercent = 100;
+              }
+
+              return (
+                <button
+                  key={job.id}
+                  onClick={() => maximizeJob(job.id)}
+                  className="w-full text-left p-2 rounded-lg bg-gray-800/50 hover:bg-gray-800 transition-colors group"
+                >
+                  <div className="flex items-center gap-2 mb-1">
+                    {(isSearching || isScraping) && (
+                      <Loader2 className="h-3 w-3 animate-spin text-blue-400 flex-shrink-0" />
+                    )}
+                    {isDone && (
+                      <CheckCircle2 className="h-3 w-3 text-green-400 flex-shrink-0" />
+                    )}
+                    <span className="text-xs text-gray-300 truncate flex-1">
+                      {job.domainName}
+                    </span>
+                    <Maximize2 className="h-3 w-3 text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </div>
+                  <Progress value={progressPercent} className="h-1" />
+                  <div className="flex items-center justify-between mt-1">
+                    <span className="text-[10px] text-gray-500">
+                      {isSearching && `Searching...`}
+                      {isScraping && `${job.sitesComplete}/${job.sitesTotal} sites`}
+                      {isDone && `Done`}
+                    </span>
+                    {job.totalLeadsAdded > 0 && (
+                      <span className="text-[10px] text-green-400">
+                        +{job.totalLeadsAdded}
+                      </span>
+                    )}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Footer */}
       <div className="border-t border-gray-800 p-4">

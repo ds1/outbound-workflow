@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
 import { useDomains } from "@/hooks/useDomains";
 import { useBulkCreateLeads } from "@/hooks/useLeads";
@@ -23,13 +23,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { Progress } from "@/components/ui/progress";
 import {
   Loader2,
   Search,
   Plus,
   Phone,
-  Mail,
   CheckCircle2,
   XCircle,
   ArrowUpCircle,
@@ -39,6 +38,7 @@ import {
   Globe,
   Circle,
   UserPlus,
+  Minimize2,
 } from "lucide-react";
 import type { Domain } from "@/types/database";
 import { extractKeywords } from "@/lib/lead-targets";
@@ -53,6 +53,11 @@ import type {
   GetQueriesResponse,
   RunQueryResponse,
 } from "@/app/api/search/route";
+import {
+  useJobsStore,
+  type LeadScrapingJob,
+  type ScrapeJobProgress,
+} from "@/stores/useJobsStore";
 
 interface ScrapedContact {
   email?: string;
@@ -62,25 +67,12 @@ interface ScrapedContact {
   source_url: string;
 }
 
-interface ScrapeProgress {
-  company: string;
-  url: string;
-  status: "pending" | "scraping" | "done" | "error";
-  leadsAdded: number;
-  error?: string;
-}
-
-interface SearchQueryProgress {
-  query: string;
-  status: "pending" | "searching" | "done" | "error";
-  resultCount: number;
-}
-
 interface FindLeadsDialogProps {
   domain?: Domain | null;
   open: boolean;
   onClose: () => void;
   showDomainSelector?: boolean;
+  resumeJobId?: string;
 }
 
 type Phase = "strategy" | "setup" | "searching" | "scraping" | "done";
@@ -97,8 +89,17 @@ export function FindLeadsDialog({
   open,
   onClose,
   showDomainSelector = false,
+  resumeJobId,
 }: FindLeadsDialogProps) {
-  // State
+  // Job store
+  const jobs = useJobsStore((state) => state.jobs);
+  const minimizedJobs = useJobsStore((state) => state.minimizedJobs);
+  const addJob = useJobsStore((state) => state.addJob);
+  const updateJob = useJobsStore((state) => state.updateJob);
+  const minimizeJob = useJobsStore((state) => state.minimizeJob);
+  const removeJob = useJobsStore((state) => state.removeJob);
+
+  // Local state for phases before job starts
   const [selectedDomain, setSelectedDomain] = useState<Domain | null>(initialDomain || null);
   const [selectedStrategy, setSelectedStrategy] = useState<LeadStrategy | null>(null);
   const [keywords, setKeywords] = useState<string[]>([]);
@@ -106,16 +107,12 @@ export function FindLeadsDialog({
   const [selectedTargets, setSelectedTargets] = useState<Set<string>>(new Set());
   const [customUrl, setCustomUrl] = useState("");
   const [phase, setPhase] = useState<Phase>("strategy");
-  const [progress, setProgress] = useState<ScrapeProgress[]>([]);
 
-  // Search progress state
-  const [searchQueries, setSearchQueries] = useState<SearchQueryProgress[]>([]);
-  const [totalDomainsFound, setTotalDomainsFound] = useState(0);
-  const [uniqueDomains, setUniqueDomains] = useState<Set<string>>(new Set());
+  // Current job ID when running
+  const [currentJobId, setCurrentJobId] = useState<string | null>(resumeJobId || null);
 
-  // Summary stats for done phase
-  const [totalLeadsAdded, setTotalLeadsAdded] = useState(0);
-  const [leadsWithPhone, setLeadsWithPhone] = useState(0);
+  // Get current job from store
+  const currentJob = currentJobId ? jobs.get(currentJobId) as LeadScrapingJob | undefined : undefined;
 
   // Hooks
   const { data: domains = [] } = useDomains();
@@ -132,27 +129,36 @@ export function FindLeadsDialog({
     }
   }, [selectedDomain]);
 
-  // Reset state when dialog closes
+  // Check if we should show a resumed job
   useEffect(() => {
-    if (!open) {
+    if (resumeJobId && jobs.has(resumeJobId)) {
+      setCurrentJobId(resumeJobId);
+      const job = jobs.get(resumeJobId) as LeadScrapingJob;
+      if (job.status === "searching") {
+        setPhase("searching");
+      } else if (job.status === "scraping") {
+        setPhase("scraping");
+      } else if (job.status === "done") {
+        setPhase("done");
+      }
+    }
+  }, [resumeJobId, jobs]);
+
+  // Reset state when dialog closes (but don't clear job)
+  useEffect(() => {
+    if (!open && !currentJobId) {
       setPhase("strategy");
       setSelectedStrategy(null);
-      setProgress([]);
       setCustomUrl("");
       setTargets([]);
       setSelectedTargets(new Set());
-      setSearchQueries([]);
-      setTotalDomainsFound(0);
-      setUniqueDomains(new Set());
-      setTotalLeadsAdded(0);
-      setLeadsWithPhone(0);
       if (!showDomainSelector) {
         setSelectedDomain(initialDomain || null);
       }
-    } else if (initialDomain) {
+    } else if (initialDomain && !currentJobId) {
       setSelectedDomain(initialDomain);
     }
-  }, [open, initialDomain, showDomainSelector]);
+  }, [open, initialDomain, showDomainSelector, currentJobId]);
 
   // Generate targets when strategy is selected
   const handleStrategySelect = async (strategy: LeadStrategy) => {
@@ -161,7 +167,6 @@ export function FindLeadsDialog({
     setSelectedStrategy(strategy);
 
     if (strategy === "market-leaders") {
-      // Market Leaders uses static mapping - no web search needed
       const marketTargets = generateMarketLeaderTargets(selectedDomain);
       setTargets(marketTargets);
       setSelectedTargets(new Set(marketTargets.map((t) => t.url)));
@@ -171,14 +176,32 @@ export function FindLeadsDialog({
         toast.info("No matching companies found for this domain's keywords.");
       }
     } else {
-      // Web search strategies - run incrementally with progress
+      // Create a job for web search
+      const jobId = `lead-scraping-${Date.now()}`;
+      const strategyInfo = LEAD_STRATEGIES.find((s) => s.id === strategy);
+
+      const newJob: LeadScrapingJob = {
+        id: jobId,
+        type: "lead-scraping",
+        status: "searching",
+        domainName: selectedDomain.full_domain || selectedDomain.name || "",
+        strategyName: strategyInfo?.name || strategy,
+        searchQueriesTotal: 0,
+        searchQueriesComplete: 0,
+        sitesTotal: 0,
+        sitesComplete: 0,
+        progress: [],
+        totalLeadsAdded: 0,
+        leadsWithPhone: 0,
+        startedAt: new Date(),
+      };
+
+      addJob(newJob);
+      setCurrentJobId(jobId);
       setPhase("searching");
-      setSearchQueries([]);
-      setTotalDomainsFound(0);
-      setUniqueDomains(new Set());
 
       try {
-        // Step 1: Get the search queries for this strategy
+        // Get search queries
         const queriesResponse = await fetch("/api/search", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -196,27 +219,19 @@ export function FindLeadsDialog({
         const queriesData = (await queriesResponse.json()) as GetQueriesResponse;
         const queries = queriesData.queries;
 
-        // Initialize query progress
-        const initialProgress: SearchQueryProgress[] = queries.map((q) => ({
-          query: q,
-          status: "pending",
-          resultCount: 0,
-        }));
-        setSearchQueries(initialProgress);
+        updateJob(jobId, { searchQueriesTotal: queries.length });
 
-        // Step 2: Run each query and update progress
+        // Run searches
         const allResults: SearchResult[] = [];
         const seenDomains = new Set<string>();
 
         for (let i = 0; i < queries.length; i++) {
           const query = queries[i];
 
-          // Update status to searching
-          setSearchQueries((prev) =>
-            prev.map((q, idx) =>
-              idx === i ? { ...q, status: "searching" } : q
-            )
-          );
+          updateJob(jobId, {
+            currentSearchQuery: query,
+            searchQueriesComplete: i,
+          });
 
           try {
             const searchResponse = await fetch("/api/search", {
@@ -229,46 +244,27 @@ export function FindLeadsDialog({
               }),
             });
 
-            if (!searchResponse.ok) {
-              throw new Error("Search request failed");
-            }
-
-            const searchData = (await searchResponse.json()) as RunQueryResponse;
-
-            // Count new unique domains
-            for (const result of searchData.results) {
-              if (!seenDomains.has(result.domain)) {
-                seenDomains.add(result.domain);
-                allResults.push(result);
+            if (searchResponse.ok) {
+              const searchData = (await searchResponse.json()) as RunQueryResponse;
+              for (const result of searchData.results) {
+                if (!seenDomains.has(result.domain)) {
+                  seenDomains.add(result.domain);
+                  allResults.push(result);
+                }
               }
             }
-
-            // Update progress
-            setSearchQueries((prev) =>
-              prev.map((q, idx) =>
-                idx === i
-                  ? { ...q, status: "done", resultCount: searchData.resultCount }
-                  : q
-              )
-            );
-            setTotalDomainsFound((prev) => prev + searchData.resultCount);
-            setUniqueDomains(new Set(seenDomains));
           } catch (error) {
             console.error(`Search failed for "${query}":`, error);
-            setSearchQueries((prev) =>
-              prev.map((q, idx) =>
-                idx === i ? { ...q, status: "error", resultCount: 0 } : q
-              )
-            );
           }
 
-          // Small delay between queries
+          updateJob(jobId, { searchQueriesComplete: i + 1 });
+
           if (i < queries.length - 1) {
             await new Promise((resolve) => setTimeout(resolve, 500));
           }
         }
 
-        // Convert results to targets
+        // Convert to targets
         const strategyTargets: StrategyTarget[] = allResults.map((r) => ({
           name: r.title || r.domain,
           url: r.url,
@@ -281,12 +277,18 @@ export function FindLeadsDialog({
         setSelectedTargets(new Set(strategyTargets.map((t) => t.url)));
         setPhase("setup");
 
+        // Clear job ID since we're back to setup (not running)
+        removeJob(jobId);
+        setCurrentJobId(null);
+
         if (strategyTargets.length === 0) {
           toast.info("No results found. Try adding custom URLs or a different strategy.");
         }
       } catch (error) {
         console.error("Search error:", error);
         toast.error(error instanceof Error ? error.message : "Search failed");
+        removeJob(jobId);
+        setCurrentJobId(null);
         setPhase("strategy");
       }
     }
@@ -335,31 +337,54 @@ export function FindLeadsDialog({
       return;
     }
 
-    setPhase("scraping");
-    setTotalLeadsAdded(0);
-    setLeadsWithPhone(0);
-
     const selectedCompanies = targets.filter((t) => selectedTargets.has(t.url));
-    const newProgress: ScrapeProgress[] = selectedCompanies.map((c) => ({
+    const strategyInfo = selectedStrategy
+      ? LEAD_STRATEGIES.find((s) => s.id === selectedStrategy)
+      : null;
+
+    // Create job
+    const jobId = `lead-scraping-${Date.now()}`;
+    const initialProgress: ScrapeJobProgress[] = selectedCompanies.map((c) => ({
       company: c.name,
-      url: c.url,
       status: "pending" as const,
       leadsAdded: 0,
     }));
-    setProgress(newProgress);
+
+    const newJob: LeadScrapingJob = {
+      id: jobId,
+      type: "lead-scraping",
+      status: "scraping",
+      domainName: selectedDomain.full_domain || selectedDomain.name || "",
+      strategyName: strategyInfo?.name || "Custom",
+      searchQueriesTotal: 0,
+      searchQueriesComplete: 0,
+      sitesTotal: selectedCompanies.length,
+      sitesComplete: 0,
+      progress: initialProgress,
+      totalLeadsAdded: 0,
+      leadsWithPhone: 0,
+      startedAt: new Date(),
+    };
+
+    addJob(newJob);
+    setCurrentJobId(jobId);
+    setPhase("scraping");
 
     let totalAdded = 0;
     let withPhone = 0;
     const seenEmails = new Set<string>();
 
-    // Scrape each company and add leads immediately
+    // Scrape each company
     for (let i = 0; i < selectedCompanies.length; i++) {
       const company = selectedCompanies[i];
 
-      // Update progress to "scraping"
-      setProgress((prev) =>
-        prev.map((p, idx) => (idx === i ? { ...p, status: "scraping" as const } : p))
-      );
+      // Update progress
+      const newProgress = [...initialProgress];
+      newProgress[i] = { ...newProgress[i], status: "scraping" };
+      updateJob(jobId, {
+        currentSite: company.name,
+        progress: newProgress,
+      });
 
       try {
         const response = await fetch("/api/scraper", {
@@ -383,7 +408,6 @@ export function FindLeadsDialog({
         const data = await response.json();
 
         if (data.success && data.contacts && data.contacts.length > 0) {
-          // Filter valid contacts (must have email, skip careers@, skip duplicates)
           const validContacts = data.contacts.filter((c: ScrapedContact) => {
             if (!c.email) return false;
             const emailLower = c.email.toLowerCase();
@@ -397,7 +421,6 @@ export function FindLeadsDialog({
           });
 
           if (validContacts.length > 0) {
-            // Create leads immediately
             const leadsToCreate = validContacts.map((c: ScrapedContact) => ({
               email: c.email || null,
               phone: c.phone || null,
@@ -413,61 +436,43 @@ export function FindLeadsDialog({
               await bulkCreateLeads.mutateAsync(leadsToCreate);
               totalAdded += validContacts.length;
               withPhone += validContacts.filter((c: ScrapedContact) => c.phone).length;
-              setTotalLeadsAdded(totalAdded);
-              setLeadsWithPhone(withPhone);
 
-              setProgress((prev) =>
-                prev.map((p, idx) =>
-                  idx === i
-                    ? { ...p, status: "done" as const, leadsAdded: validContacts.length }
-                    : p
-                )
-              );
+              newProgress[i] = { ...newProgress[i], status: "done", leadsAdded: validContacts.length };
             } catch (err) {
-              console.error("Failed to create leads:", err);
-              setProgress((prev) =>
-                prev.map((p, idx) =>
-                  idx === i
-                    ? { ...p, status: "error" as const, error: "Failed to save leads" }
-                    : p
-                )
-              );
+              newProgress[i] = { ...newProgress[i], status: "error", error: "Failed to save" };
             }
           } else {
-            // No valid contacts found
-            setProgress((prev) =>
-              prev.map((p, idx) =>
-                idx === i ? { ...p, status: "done" as const, leadsAdded: 0 } : p
-              )
-            );
+            newProgress[i] = { ...newProgress[i], status: "done", leadsAdded: 0 };
           }
         } else {
-          // No contacts in response
-          setProgress((prev) =>
-            prev.map((p, idx) =>
-              idx === i ? { ...p, status: "done" as const, leadsAdded: 0 } : p
-            )
-          );
+          newProgress[i] = { ...newProgress[i], status: "done", leadsAdded: 0 };
         }
       } catch (err) {
-        setProgress((prev) =>
-          prev.map((p, idx) =>
-            idx === i
-              ? {
-                  ...p,
-                  status: "error" as const,
-                  error: err instanceof Error ? err.message : "Failed",
-                }
-              : p
-          )
-        );
+        newProgress[i] = {
+          ...newProgress[i],
+          status: "error",
+          error: err instanceof Error ? err.message : "Failed",
+        };
       }
 
-      // Small delay between requests
+      updateJob(jobId, {
+        sitesComplete: i + 1,
+        progress: [...newProgress],
+        totalLeadsAdded: totalAdded,
+        leadsWithPhone: withPhone,
+      });
+
       if (i < selectedCompanies.length - 1) {
         await new Promise((resolve) => setTimeout(resolve, 1000));
       }
     }
+
+    // Mark complete
+    updateJob(jobId, {
+      status: "done",
+      currentSite: undefined,
+      completedAt: new Date(),
+    });
 
     setPhase("done");
 
@@ -478,48 +483,75 @@ export function FindLeadsDialog({
     }
   };
 
+  const handleMinimize = () => {
+    if (currentJobId) {
+      minimizeJob(currentJobId);
+      onClose();
+    }
+  };
+
   const goBackToStrategy = () => {
+    if (currentJobId) {
+      removeJob(currentJobId);
+      setCurrentJobId(null);
+    }
     setPhase("strategy");
     setSelectedStrategy(null);
     setTargets([]);
     setSelectedTargets(new Set());
-    setSearchQueries([]);
-    setTotalDomainsFound(0);
-    setUniqueDomains(new Set());
   };
 
-  // Computed values
-  const completedQueries = searchQueries.filter((q) => q.status === "done" || q.status === "error").length;
-  const currentQuery = searchQueries.find((q) => q.status === "searching");
-  const scrapingComplete = progress.filter((p) => p.status === "done" || p.status === "error").length;
-  const currentScraping = progress.find((p) => p.status === "scraping");
+  const handleClose = () => {
+    if (currentJobId && currentJob?.status === "done") {
+      removeJob(currentJobId);
+      setCurrentJobId(null);
+    }
+    onClose();
+  };
 
   // Get current strategy info
   const currentStrategy = selectedStrategy
     ? LEAD_STRATEGIES.find((s) => s.id === selectedStrategy)
     : null;
 
+  // Calculate progress for display
+  const searchProgress = currentJob?.searchQueriesTotal
+    ? (currentJob.searchQueriesComplete / currentJob.searchQueriesTotal) * 100
+    : 0;
+  const scrapeProgress = currentJob?.sitesTotal
+    ? (currentJob.sitesComplete / currentJob.sitesTotal) * 100
+    : 0;
+
+  const canMinimize = phase === "searching" || phase === "scraping";
+
   return (
-    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
+    <Dialog open={open} onOpenChange={(o) => !o && handleClose()}>
       <DialogContent className="max-w-2xl max-h-[80vh] flex flex-col overflow-hidden">
         <DialogHeader className="flex-shrink-0">
-          <DialogTitle className="flex items-center gap-2">
-            <Search className="h-5 w-5" />
-            {phase === "done"
-              ? `Added ${totalLeadsAdded} Leads`
-              : phase === "strategy"
-              ? "Choose Lead Strategy"
-              : phase === "searching"
-              ? "Searching for Companies"
-              : phase === "scraping"
-              ? "Finding Contacts"
-              : `Find Leads${selectedDomain ? ` for ${selectedDomain.full_domain}` : ""}`}
-          </DialogTitle>
+          <div className="flex items-center justify-between">
+            <DialogTitle className="flex items-center gap-2">
+              <Search className="h-5 w-5" />
+              {phase === "done"
+                ? `Added ${currentJob?.totalLeadsAdded || 0} Leads`
+                : phase === "strategy"
+                ? "Choose Lead Strategy"
+                : phase === "searching"
+                ? "Searching for Companies"
+                : phase === "scraping"
+                ? "Finding Contacts"
+                : `Find Leads${selectedDomain ? ` for ${selectedDomain.full_domain}` : ""}`}
+            </DialogTitle>
+            {canMinimize && (
+              <Button variant="ghost" size="icon" onClick={handleMinimize} className="h-8 w-8">
+                <Minimize2 className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
           <DialogDescription>
             {phase === "strategy" && "Select a strategy to find the most relevant leads"}
             {phase === "searching" && (
               <span className="flex items-center gap-2">
-                <Badge variant="outline">{currentStrategy?.name}</Badge>
+                <Badge variant="outline">{currentJob?.strategyName || currentStrategy?.name}</Badge>
                 Running web searches to find potential buyers...
               </span>
             )}
@@ -538,7 +570,6 @@ export function FindLeadsDialog({
           {/* Strategy Selection Phase */}
           {phase === "strategy" && (
             <div className="space-y-6 py-2">
-              {/* Domain Selector (for Leads page) */}
               {showDomainSelector && (
                 <div className="space-y-2">
                   <Label>Select Domain</Label>
@@ -563,7 +594,6 @@ export function FindLeadsDialog({
                 </div>
               )}
 
-              {/* Strategy Cards */}
               {selectedDomain && (
                 <div className="space-y-3">
                   {LEAD_STRATEGIES.map((strategy) => {
@@ -599,7 +629,6 @@ export function FindLeadsDialog({
                 </div>
               )}
 
-              {/* No domain selected */}
               {!selectedDomain && showDomainSelector && (
                 <div className="text-center py-6 text-muted-foreground">
                   <p>Select a domain to choose a lead strategy.</p>
@@ -608,96 +637,36 @@ export function FindLeadsDialog({
             </div>
           )}
 
-          {/* Searching Phase - Detailed Progress */}
-          {phase === "searching" && (
+          {/* Searching Phase */}
+          {phase === "searching" && currentJob && (
             <div className="space-y-6 py-2">
-              {/* Summary Stats */}
-              <div className="grid grid-cols-3 gap-4">
-                <div className="p-3 bg-muted/50 rounded-lg text-center">
-                  <p className="text-2xl font-bold">{completedQueries}/{searchQueries.length}</p>
-                  <p className="text-xs text-muted-foreground">Searches Complete</p>
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span>Searching for companies...</span>
+                  <span className="text-muted-foreground">
+                    {currentJob.searchQueriesComplete}/{currentJob.searchQueriesTotal}
+                  </span>
                 </div>
-                <div className="p-3 bg-muted/50 rounded-lg text-center">
-                  <p className="text-2xl font-bold">{totalDomainsFound}</p>
-                  <p className="text-xs text-muted-foreground">Results Found</p>
-                </div>
-                <div className="p-3 bg-muted/50 rounded-lg text-center">
-                  <p className="text-2xl font-bold">{uniqueDomains.size}</p>
-                  <p className="text-xs text-muted-foreground">Unique Companies</p>
-                </div>
+                <Progress value={searchProgress} className="h-2" />
               </div>
 
-              {/* Current Query */}
-              {currentQuery && (
-                <div className="p-3 border rounded-lg bg-primary/5 border-primary/20">
+              {currentJob.currentSearchQuery && (
+                <div className="p-3 border rounded-lg bg-muted/50">
                   <div className="flex items-center gap-2">
                     <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                    <span className="text-sm font-medium">Searching:</span>
+                    <span className="text-sm font-medium">Current query:</span>
                   </div>
                   <p className="text-sm text-muted-foreground mt-1 font-mono break-all">
-                    {currentQuery.query}
+                    {currentJob.currentSearchQuery}
                   </p>
                 </div>
               )}
-
-              {/* Query List */}
-              <div className="space-y-2">
-                <Label className="text-sm">Search Queries</Label>
-                <div className="space-y-1 max-h-[200px] overflow-y-auto">
-                  {searchQueries.map((q, i) => (
-                    <div
-                      key={i}
-                      className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm ${
-                        q.status === "searching"
-                          ? "bg-primary/10 border border-primary/20"
-                          : q.status === "done"
-                          ? "bg-muted/50"
-                          : q.status === "error"
-                          ? "bg-destructive/10"
-                          : ""
-                      }`}
-                    >
-                      {q.status === "pending" && (
-                        <Circle className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                      )}
-                      {q.status === "searching" && (
-                        <Loader2 className="h-4 w-4 animate-spin text-primary flex-shrink-0" />
-                      )}
-                      {q.status === "done" && (
-                        <CheckCircle2 className="h-4 w-4 text-green-500 flex-shrink-0" />
-                      )}
-                      {q.status === "error" && (
-                        <XCircle className="h-4 w-4 text-red-500 flex-shrink-0" />
-                      )}
-                      <span className="flex-1 font-mono text-xs truncate">
-                        {q.query}
-                      </span>
-                      {q.status === "done" && (
-                        <Badge variant="secondary" className="text-xs flex-shrink-0">
-                          {q.resultCount}
-                        </Badge>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
             </div>
           )}
 
           {/* Setup Phase */}
           {phase === "setup" && (
             <div className="space-y-4 py-2">
-              {/* Search Summary (for web search strategies) */}
-              {searchQueries.length > 0 && (
-                <div className="p-3 bg-muted/50 rounded-lg border">
-                  <p className="text-sm">
-                    <span className="font-medium">Search complete:</span>{" "}
-                    Found {uniqueDomains.size} unique companies from {searchQueries.length} searches
-                  </p>
-                </div>
-              )}
-
-              {/* Keywords Detected (for market leaders) */}
               {keywords.length > 0 && selectedStrategy === "market-leaders" && (
                 <div className="space-y-2">
                   <Label className="text-sm text-muted-foreground">Keywords detected</Label>
@@ -711,7 +680,6 @@ export function FindLeadsDialog({
                 </div>
               )}
 
-              {/* Target Companies */}
               {targets.length > 0 && (
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
@@ -754,7 +722,6 @@ export function FindLeadsDialog({
                 </div>
               )}
 
-              {/* Custom URL */}
               <div className="space-y-2">
                 <Label>Add Custom URL</Label>
                 <div className="flex gap-2">
@@ -770,7 +737,6 @@ export function FindLeadsDialog({
                 </div>
               </div>
 
-              {/* No targets message */}
               {targets.length === 0 && (
                 <div className="text-center py-6 text-muted-foreground">
                   <p>No companies found from web search.</p>
@@ -781,58 +747,46 @@ export function FindLeadsDialog({
           )}
 
           {/* Scraping Phase */}
-          {phase === "scraping" && (
+          {phase === "scraping" && currentJob && (
             <div className="space-y-4 py-2">
-              {/* Progress Stats */}
               <div className="grid grid-cols-3 gap-4">
                 <div className="p-3 bg-muted/50 rounded-lg text-center">
-                  <p className="text-2xl font-bold">{scrapingComplete}/{progress.length}</p>
+                  <p className="text-2xl font-bold">{currentJob.sitesComplete}/{currentJob.sitesTotal}</p>
                   <p className="text-xs text-muted-foreground">Sites Scraped</p>
                 </div>
                 <div className="p-3 bg-muted/50 rounded-lg text-center">
-                  <p className="text-2xl font-bold text-green-600">{totalLeadsAdded}</p>
+                  <p className="text-2xl font-bold text-green-600">{currentJob.totalLeadsAdded}</p>
                   <p className="text-xs text-muted-foreground">Leads Added</p>
                 </div>
                 <div className="p-3 bg-muted/50 rounded-lg text-center">
-                  <p className="text-2xl font-bold">{leadsWithPhone}</p>
+                  <p className="text-2xl font-bold">{currentJob.leadsWithPhone}</p>
                   <p className="text-xs text-muted-foreground">With Phone</p>
                 </div>
               </div>
 
-              {/* Current Scraping */}
-              {currentScraping && (
-                <div className="p-3 border rounded-lg bg-primary/5 border-primary/20">
+              <Progress value={scrapeProgress} className="h-2" />
+
+              {currentJob.currentSite && (
+                <div className="p-3 border rounded-lg bg-primary/5">
                   <div className="flex items-center gap-2">
                     <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                    <span className="text-sm font-medium">Scraping:</span>
+                    <span className="text-sm truncate">{currentJob.currentSite}</span>
                   </div>
-                  <p className="text-sm text-muted-foreground mt-1 truncate">
-                    {currentScraping.company}
-                  </p>
                 </div>
               )}
 
-              {/* Progress List */}
-              <div className="space-y-1 max-h-[250px] overflow-y-auto">
-                {progress.map((p, i) => (
+              <div className="space-y-1 max-h-[200px] overflow-y-auto">
+                {currentJob.progress.map((p, i) => (
                   <div
                     key={i}
                     className={`flex items-center gap-3 px-3 py-2 rounded-md ${
                       p.status === "scraping" ? "bg-primary/5" : ""
                     }`}
                   >
-                    {p.status === "pending" && (
-                      <Circle className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                    )}
-                    {p.status === "scraping" && (
-                      <Loader2 className="h-4 w-4 animate-spin text-primary flex-shrink-0" />
-                    )}
-                    {p.status === "done" && (
-                      <CheckCircle2 className="h-4 w-4 text-green-500 flex-shrink-0" />
-                    )}
-                    {p.status === "error" && (
-                      <XCircle className="h-4 w-4 text-red-500 flex-shrink-0" />
-                    )}
+                    {p.status === "pending" && <Circle className="h-4 w-4 text-muted-foreground flex-shrink-0" />}
+                    {p.status === "scraping" && <Loader2 className="h-4 w-4 animate-spin text-primary flex-shrink-0" />}
+                    {p.status === "done" && <CheckCircle2 className="h-4 w-4 text-green-500 flex-shrink-0" />}
+                    {p.status === "error" && <XCircle className="h-4 w-4 text-red-500 flex-shrink-0" />}
                     <span className="flex-1 text-sm truncate">{p.company}</span>
                     {p.status === "done" && p.leadsAdded > 0 && (
                       <Badge variant="default" className="text-xs bg-green-600">
@@ -853,19 +807,18 @@ export function FindLeadsDialog({
           )}
 
           {/* Done Phase */}
-          {phase === "done" && (
+          {phase === "done" && currentJob && (
             <div className="space-y-6 py-4">
-              {/* Summary */}
               <div className="text-center py-6">
-                {totalLeadsAdded > 0 ? (
+                {currentJob.totalLeadsAdded > 0 ? (
                   <>
                     <CheckCircle2 className="h-16 w-16 text-green-500 mx-auto mb-4" />
-                    <h3 className="text-2xl font-bold">{totalLeadsAdded} Leads Added</h3>
+                    <h3 className="text-2xl font-bold">{currentJob.totalLeadsAdded} Leads Added</h3>
                     <p className="text-muted-foreground mt-2">
-                      {leadsWithPhone > 0 && (
+                      {currentJob.leadsWithPhone > 0 && (
                         <span className="flex items-center justify-center gap-2">
                           <Phone className="h-4 w-4" />
-                          {leadsWithPhone} with phone numbers for multi-channel outreach
+                          {currentJob.leadsWithPhone} with phone numbers
                         </span>
                       )}
                     </p>
@@ -875,17 +828,14 @@ export function FindLeadsDialog({
                     <XCircle className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
                     <h3 className="text-xl font-semibold">No Contacts Found</h3>
                     <p className="text-muted-foreground mt-2">
-                      The selected websites didn&apos;t have visible contact information.
-                      <br />
                       Try a different strategy or add company websites directly.
                     </p>
                   </>
                 )}
               </div>
 
-              {/* Scrape Summary */}
-              <div className="border rounded-lg divide-y">
-                {progress.map((p, i) => (
+              <div className="border rounded-lg divide-y max-h-[200px] overflow-y-auto">
+                {currentJob.progress.map((p, i) => (
                   <div key={i} className="flex items-center gap-3 px-4 py-2">
                     {p.status === "done" && p.leadsAdded > 0 ? (
                       <CheckCircle2 className="h-4 w-4 text-green-500 flex-shrink-0" />
@@ -911,7 +861,7 @@ export function FindLeadsDialog({
         <div className="flex items-center justify-between pt-4 border-t mt-2 flex-shrink-0">
           {phase === "strategy" && (
             <>
-              <Button variant="ghost" onClick={onClose}>
+              <Button variant="ghost" onClick={handleClose}>
                 Cancel
               </Button>
               <div className="text-sm text-muted-foreground">
@@ -926,9 +876,10 @@ export function FindLeadsDialog({
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Cancel
               </Button>
-              <div className="text-sm text-muted-foreground">
-                {completedQueries} of {searchQueries.length} searches complete
-              </div>
+              <Button variant="outline" onClick={handleMinimize}>
+                <Minimize2 className="mr-2 h-4 w-4" />
+                Minimize
+              </Button>
             </>
           )}
 
@@ -951,12 +902,12 @@ export function FindLeadsDialog({
           {phase === "scraping" && (
             <>
               <div className="text-sm text-muted-foreground">
-                {scrapingComplete} of {progress.length} complete
+                {currentJob?.sitesComplete} of {currentJob?.sitesTotal} complete
               </div>
-              <div className="flex items-center gap-2 text-sm">
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Adding leads as found...
-              </div>
+              <Button variant="outline" onClick={handleMinimize}>
+                <Minimize2 className="mr-2 h-4 w-4" />
+                Minimize
+              </Button>
             </>
           )}
 
@@ -966,7 +917,7 @@ export function FindLeadsDialog({
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Find More
               </Button>
-              <Button onClick={onClose}>
+              <Button onClick={handleClose}>
                 Done
               </Button>
             </>
