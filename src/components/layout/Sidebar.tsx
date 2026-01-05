@@ -10,7 +10,6 @@ import {
   FileText,
   Settings,
   LayoutDashboard,
-  Phone,
   AlertTriangle,
   BarChart3,
   Loader2,
@@ -65,9 +64,8 @@ export function Sidebar() {
     <div className="flex h-full w-64 flex-col bg-gray-900">
       {/* Logo */}
       <div className="flex h-16 items-center justify-center border-b border-gray-800">
-        <Link href="/dashboard" className="flex items-center gap-2">
-          <Phone className="h-8 w-8 text-blue-500" />
-          <span className="text-xl font-bold text-white">DeepOutbound</span>
+        <Link href="/dashboard" className="flex items-center">
+          <span className="text-xl font-bold text-white">Deep Outbound</span>
         </Link>
       </div>
 
