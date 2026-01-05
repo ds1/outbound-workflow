@@ -2,7 +2,7 @@
 // Uses Puppeteer to search DuckDuckGo and extract results
 // (DuckDuckGo is used instead of Google because Google blocks automated searches with CAPTCHA)
 
-import puppeteer from "puppeteer";
+import { launchBrowser } from "@/lib/browser";
 
 export interface SearchResult {
   title: string;
@@ -26,14 +26,7 @@ export async function searchGoogle(
 ): Promise<SearchResult[]> {
   const { maxResults = 20, timeout = 30000 } = options;
 
-  const browser = await puppeteer.launch({
-    headless: true,
-    args: [
-      "--no-sandbox",
-      "--disable-setuid-sandbox",
-      "--disable-dev-shm-usage",
-    ],
-  });
+  const browser = await launchBrowser();
 
   try {
     const page = await browser.newPage();

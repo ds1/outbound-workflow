@@ -1,4 +1,5 @@
-import puppeteer, { Browser, Page } from "puppeteer";
+import { type Browser, type Page } from "puppeteer-core";
+import { launchBrowser } from "@/lib/browser";
 
 // Types for scraped data
 export interface ScrapedContact {
@@ -74,16 +75,7 @@ class ScraperService {
    */
   private async getBrowser(): Promise<Browser> {
     if (!this.browser) {
-      this.browser = await puppeteer.launch({
-        headless: true,
-        args: [
-          "--no-sandbox",
-          "--disable-setuid-sandbox",
-          "--disable-dev-shm-usage",
-          "--disable-accelerated-2d-canvas",
-          "--disable-gpu",
-        ],
-      });
+      this.browser = await launchBrowser();
     }
     return this.browser;
   }
