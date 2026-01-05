@@ -20,6 +20,7 @@ export type Database = {
           landing_page_url: string | null;
           status: "available" | "sold" | "reserved" | "expired";
           metadata: Json;
+          user_id: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -32,6 +33,7 @@ export type Database = {
           landing_page_url?: string | null;
           status?: "available" | "sold" | "reserved" | "expired";
           metadata?: Json;
+          user_id?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -44,6 +46,7 @@ export type Database = {
           landing_page_url?: string | null;
           status?: "available" | "sold" | "reserved" | "expired";
           metadata?: Json;
+          user_id?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -66,6 +69,7 @@ export type Database = {
           do_not_contact: boolean;
           unsubscribed_at: string | null;
           metadata: Json;
+          user_id: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -85,6 +89,7 @@ export type Database = {
           do_not_contact?: boolean;
           unsubscribed_at?: string | null;
           metadata?: Json;
+          user_id?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -104,6 +109,7 @@ export type Database = {
           do_not_contact?: boolean;
           unsubscribed_at?: string | null;
           metadata?: Json;
+          user_id?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -376,6 +382,7 @@ export type Database = {
           enrolled_at: string;
           completed_at: string | null;
           paused_at: string | null;
+          user_id: string | null;
         };
         Insert: {
           id?: string;
@@ -391,6 +398,7 @@ export type Database = {
           enrolled_at?: string;
           completed_at?: string | null;
           paused_at?: string | null;
+          user_id?: string | null;
         };
         Update: {
           id?: string;
@@ -406,6 +414,7 @@ export type Database = {
           enrolled_at?: string;
           completed_at?: string | null;
           paused_at?: string | null;
+          user_id?: string | null;
         };
         Relationships: [
           {
@@ -436,6 +445,7 @@ export type Database = {
           campaign_id: string | null;
           prospect_id: string | null;
           metadata: Json;
+          user_id: string | null;
           created_at: string;
         };
         Insert: {
@@ -449,6 +459,7 @@ export type Database = {
           campaign_id?: string | null;
           prospect_id?: string | null;
           metadata?: Json;
+          user_id?: string | null;
           created_at?: string;
         };
         Update: {
@@ -462,6 +473,7 @@ export type Database = {
           campaign_id?: string | null;
           prospect_id?: string | null;
           metadata?: Json;
+          user_id?: string | null;
           created_at?: string;
         };
         Relationships: [];
@@ -582,6 +594,7 @@ export interface CostLog {
   campaign_id: string | null;
   prospect_id: string | null;
   metadata: Json;
+  user_id: string | null;
   created_at: string;
 }
 

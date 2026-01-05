@@ -43,9 +43,12 @@ export function useCreateDomain() {
 
   return useMutation({
     mutationFn: async (domain: DomainInsert) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
       const { data, error } = await supabase
         .from("domains")
-        .insert(domain)
+        .insert({ ...domain, user_id: user.id })
         .select()
         .single();
 

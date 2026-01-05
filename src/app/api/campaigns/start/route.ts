@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { createClient as createServiceClient } from "@supabase/supabase-js";
+import { createClient } from "@/lib/supabase/server";
 import { scheduleEmailJob, scheduleVoicemailJob, scheduleTask } from "@/lib/queue";
 import type { Database } from "@/types/database";
 
-// Server-side Supabase client
-function getSupabase() {
+// Server-side Supabase client with service role (for operations that need to bypass RLS)
+function getServiceSupabase() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
@@ -12,7 +13,7 @@ function getSupabase() {
     throw new Error("Supabase credentials not configured");
   }
 
-  return createClient<Database>(url, serviceKey);
+  return createServiceClient<Database>(url, serviceKey);
 }
 
 // Campaign step type
@@ -26,6 +27,17 @@ interface CampaignStep {
 
 export async function POST(request: NextRequest) {
   try {
+    // Verify authentication
+    const supabase = await createClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return NextResponse.json(
+        { error: "Authentication required" },
+        { status: 401 }
+      );
+    }
+
     const { campaign_id } = await request.json();
 
     if (!campaign_id) {
@@ -35,7 +47,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const supabase = getSupabase();
+    // Verify user owns this campaign
+    const { data: ownedCampaign, error: ownershipError } = await supabase
+      .from("campaigns")
+      .select("id")
+      .eq("id", campaign_id)
+      .eq("created_by", user.id)
+      .single();
+
+    if (ownershipError || !ownedCampaign) {
+      return NextResponse.json(
+        { error: "Campaign not found or access denied" },
+        { status: 403 }
+      );
+    }
+
+    // Use service client for the actual operations
+    const serviceSupabase = getServiceSupabase();
 
     // Get campaign details
     const { data: campaign, error: campaignError } = await supabase

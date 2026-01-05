@@ -8,6 +8,7 @@ import { useDomains } from "@/hooks/useDomains";
 import { useLeads } from "@/hooks/useLeads";
 import { useEmailTemplates, useVoicemailTemplates } from "@/hooks/useTemplates";
 import { useRecentActivityLogs } from "@/hooks/useActivityLogs";
+import { useUserSettings } from "@/hooks/useSettings";
 import { formatDistanceToNow } from "date-fns";
 
 const activityTypeIcons: Record<string, typeof Mail> = {
@@ -38,6 +39,17 @@ export default function DashboardPage() {
   const { data: emailTemplates = [], isLoading: emailTemplatesLoading } = useEmailTemplates();
   const { data: voicemailTemplates = [], isLoading: voicemailTemplatesLoading } = useVoicemailTemplates();
   const { data: recentActivity = [], isLoading: activityLoading } = useRecentActivityLogs(10);
+  const { data: userSettings = {} } = useUserSettings();
+
+  // Check which API keys are configured
+  const apiKeysConfigured = {
+    claude: !!userSettings.anthropic_api_key,
+    elevenlabs: !!userSettings.elevenlabs_api_key,
+    slybroadcast: !!userSettings.slybroadcast_email && !!userSettings.slybroadcast_password,
+    resend: !!userSettings.resend_api_key,
+  };
+  const apiKeysCount = Object.values(apiKeysConfigured).filter(Boolean).length;
+  const hasAnyApiKeys = apiKeysCount > 0;
 
   const stats = [
     {
@@ -248,10 +260,19 @@ export default function DashboardPage() {
               )}
             </div>
             <div className="flex items-center gap-3">
-              <div className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-gray-300">
-                <span className="text-xs">4</span>
+              <div className={`flex h-6 w-6 items-center justify-center rounded-full border-2 ${hasAnyApiKeys ? "border-green-500 bg-green-500 text-white" : "border-gray-300"}`}>
+                {hasAnyApiKeys ? (
+                  <span className="text-xs">✓</span>
+                ) : (
+                  <span className="text-xs">4</span>
+                )}
               </div>
-              <span>Add API keys in Settings (Claude, ElevenLabs, Slybroadcast, Resend)</span>
+              <span className={hasAnyApiKeys ? "line-through text-muted-foreground" : ""}>
+                Add API keys in Settings (Claude, ElevenLabs, Slybroadcast, Resend)
+              </span>
+              {hasAnyApiKeys && (
+                <Badge variant="secondary">{apiKeysCount}/4 configured</Badge>
+              )}
             </div>
             <div className="flex items-center gap-3">
               <div className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-gray-300">

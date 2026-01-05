@@ -49,6 +49,28 @@ const SLYBROADCAST_AUDIO_LIST_URL = "https://www.mobile-sphere.com/gateway/vmb.a
 class SlybroadcastService {
   private credentials: SlybroadcastCredentials | null = null;
 
+  /**
+   * Get the webhook callback URL with security token
+   */
+  private getWebhookUrl(): string | undefined {
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.VERCEL_URL;
+    const token = process.env.SLYBROADCAST_WEBHOOK_TOKEN;
+
+    if (!baseUrl) {
+      console.warn("NEXT_PUBLIC_APP_URL not set - voicemail callbacks disabled");
+      return undefined;
+    }
+
+    const url = baseUrl.startsWith("http") ? baseUrl : `https://${baseUrl}`;
+
+    if (token) {
+      return `${url}/api/webhooks/voicemail?token=${token}`;
+    }
+
+    // Return URL without token if not configured (less secure)
+    return `${url}/api/webhooks/voicemail`;
+  }
+
   private getCredentials(): SlybroadcastCredentials {
     if (!this.credentials) {
       const email = process.env.SLYBROADCAST_EMAIL;
@@ -301,7 +323,7 @@ class SlybroadcastService {
       audio_type: "mp3",
       scheduled_time: "now",
       campaign_name: options?.campaign_name,
-      webhook_url: options?.webhook_url,
+      webhook_url: options?.webhook_url || this.getWebhookUrl(),
     });
   }
 
@@ -325,7 +347,7 @@ class SlybroadcastService {
       scheduled_time: options?.scheduled_time || "now",
       campaign_name: options?.campaign_name,
       mobile_only: options?.mobile_only,
-      webhook_url: options?.webhook_url,
+      webhook_url: options?.webhook_url || this.getWebhookUrl(),
     });
   }
 

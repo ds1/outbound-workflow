@@ -54,9 +54,12 @@ export function useCreateLead() {
 
   return useMutation({
     mutationFn: async (lead: ProspectInsert) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
       const { data, error } = await supabase
         .from("prospects")
-        .insert(lead)
+        .insert({ ...lead, user_id: user.id })
         .select()
         .single();
 
@@ -112,9 +115,14 @@ export function useBulkCreateLeads() {
 
   return useMutation({
     mutationFn: async (leads: ProspectInsert[]) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
+      const leadsWithUserId = leads.map(lead => ({ ...lead, user_id: user.id }));
+
       const { data, error } = await supabase
         .from("prospects")
-        .insert(leads)
+        .insert(leadsWithUserId)
         .select();
 
       if (error) throw error;

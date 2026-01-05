@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { Webhook } from "svix";
 import type { Database } from "@/types/database";
 
 // Server-side Supabase client
@@ -12,6 +13,42 @@ function getSupabase() {
   }
 
   return createClient<Database>(url, serviceKey);
+}
+
+// Verify Resend webhook signature using Svix
+async function verifyWebhookSignature(request: NextRequest): Promise<{ verified: boolean; payload?: ResendWebhookEvent; error?: string }> {
+  const webhookSecret = process.env.RESEND_WEBHOOK_SECRET;
+
+  // If no secret configured, log warning but allow (for development)
+  if (!webhookSecret) {
+    console.warn("RESEND_WEBHOOK_SECRET not configured - webhook signature verification disabled");
+    const payload = await request.json();
+    return { verified: true, payload };
+  }
+
+  const svixId = request.headers.get("svix-id");
+  const svixTimestamp = request.headers.get("svix-timestamp");
+  const svixSignature = request.headers.get("svix-signature");
+
+  if (!svixId || !svixTimestamp || !svixSignature) {
+    return { verified: false, error: "Missing Svix headers" };
+  }
+
+  const body = await request.text();
+
+  try {
+    const wh = new Webhook(webhookSecret);
+    const payload = wh.verify(body, {
+      "svix-id": svixId,
+      "svix-timestamp": svixTimestamp,
+      "svix-signature": svixSignature,
+    }) as ResendWebhookEvent;
+
+    return { verified: true, payload };
+  } catch (err) {
+    console.error("Webhook signature verification failed:", err);
+    return { verified: false, error: "Invalid signature" };
+  }
 }
 
 // Resend webhook event types
@@ -40,7 +77,17 @@ type ResendWebhookEvent = {
 
 export async function POST(request: NextRequest) {
   try {
-    const event = (await request.json()) as ResendWebhookEvent;
+    // Verify webhook signature
+    const { verified, payload: event, error } = await verifyWebhookSignature(request);
+
+    if (!verified || !event) {
+      console.error("Webhook verification failed:", error);
+      return NextResponse.json(
+        { error: error || "Webhook verification failed" },
+        { status: 401 }
+      );
+    }
+
     const supabase = getSupabase();
 
     const emailId = event.data.email_id;

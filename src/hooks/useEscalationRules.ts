@@ -84,6 +84,9 @@ export function useCreateEscalationRule() {
 
   return useMutation({
     mutationFn: async (data: EscalationRuleFormData) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
       const insertData = {
         name: data.name,
         description: data.description || null,
@@ -93,6 +96,7 @@ export function useCreateEscalationRule() {
         conditions: JSON.parse(JSON.stringify(data.conditions)),
         actions: JSON.parse(JSON.stringify(data.actions)),
         cooldown_hours: data.cooldown_hours,
+        created_by: user.id,
       };
 
       const { data: rule, error } = await supabase

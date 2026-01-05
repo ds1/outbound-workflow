@@ -30,7 +30,7 @@ export default function SettingsPage() {
 
   // Notification preferences state
   const [notifications, setNotifications] = useState({
-    escalation_email: "danmakesthings@gmail.com",
+    escalation_email: "",
     daily_digest: true,
     reply_alerts: true,
     cost_alerts: false,
@@ -69,7 +69,7 @@ export default function SettingsPage() {
   useEffect(() => {
     if (notificationPrefs) {
       setNotifications({
-        escalation_email: notificationPrefs.escalation_email || "danmakesthings@gmail.com",
+        escalation_email: notificationPrefs.escalation_email || "",
         daily_digest: notificationPrefs.daily_digest ?? true,
         reply_alerts: notificationPrefs.reply_alerts ?? true,
         cost_alerts: notificationPrefs.cost_alerts ?? false,
@@ -171,6 +171,7 @@ export default function SettingsPage() {
                       id="anthropic"
                       type="password"
                       placeholder="sk-ant-..."
+                      autoComplete="off"
                       value={apiKeys.anthropic_api_key}
                       onChange={(e) => setApiKeys({ ...apiKeys, anthropic_api_key: e.target.value })}
                     />
@@ -189,6 +190,7 @@ export default function SettingsPage() {
                       id="elevenlabs"
                       type="password"
                       placeholder="Your ElevenLabs API key"
+                      autoComplete="off"
                       value={apiKeys.elevenlabs_api_key}
                       onChange={(e) => setApiKeys({ ...apiKeys, elevenlabs_api_key: e.target.value })}
                     />
@@ -208,6 +210,7 @@ export default function SettingsPage() {
                         id="slybroadcastEmail"
                         type="email"
                         placeholder="your-email@example.com"
+                        autoComplete="off"
                         value={apiKeys.slybroadcast_email}
                         onChange={(e) => setApiKeys({ ...apiKeys, slybroadcast_email: e.target.value })}
                       />
@@ -218,6 +221,7 @@ export default function SettingsPage() {
                         id="slybroadcastPassword"
                         type="password"
                         placeholder="Your Slybroadcast password"
+                        autoComplete="off"
                         value={apiKeys.slybroadcast_password}
                         onChange={(e) => setApiKeys({ ...apiKeys, slybroadcast_password: e.target.value })}
                       />
@@ -237,6 +241,7 @@ export default function SettingsPage() {
                       id="resend"
                       type="password"
                       placeholder="re_..."
+                      autoComplete="off"
                       value={apiKeys.resend_api_key}
                       onChange={(e) => setApiKeys({ ...apiKeys, resend_api_key: e.target.value })}
                     />

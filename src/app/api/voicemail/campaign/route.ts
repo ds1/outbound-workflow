@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { slybroadcastService, CampaignAction } from "@/services/slybroadcast";
+import { createClient } from "@/lib/supabase/server";
 
 export interface BulkVoicemailRequest {
   phone_numbers: string[];
@@ -18,6 +19,17 @@ export interface CampaignControlRequest {
 // POST - Create bulk voicemail campaign
 export async function POST(request: NextRequest) {
   try {
+    // Verify authentication
+    const supabase = await createClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return NextResponse.json(
+        { error: "Authentication required" },
+        { status: 401 }
+      );
+    }
+
     const body = (await request.json()) as BulkVoicemailRequest;
 
     // Validate required fields
@@ -81,6 +93,17 @@ export async function POST(request: NextRequest) {
 // PATCH - Control existing campaign (pause, run, stop, cancel)
 export async function PATCH(request: NextRequest) {
   try {
+    // Verify authentication
+    const supabase = await createClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return NextResponse.json(
+        { error: "Authentication required" },
+        { status: 401 }
+      );
+    }
+
     const body = (await request.json()) as CampaignControlRequest;
 
     // Validate required fields

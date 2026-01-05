@@ -14,6 +14,27 @@ function getSupabase() {
   return createClient<Database>(url, serviceKey);
 }
 
+// Verify webhook token (since Slybroadcast doesn't support signature verification)
+function verifyWebhookToken(request: NextRequest): boolean {
+  const webhookToken = process.env.SLYBROADCAST_WEBHOOK_TOKEN;
+
+  // If no token configured, log warning but allow (for development)
+  if (!webhookToken) {
+    console.warn("SLYBROADCAST_WEBHOOK_TOKEN not configured - token verification disabled");
+    return true;
+  }
+
+  const url = new URL(request.url);
+  const token = url.searchParams.get("token");
+
+  if (!token || token !== webhookToken) {
+    console.error("Invalid or missing webhook token");
+    return false;
+  }
+
+  return true;
+}
+
 // Slybroadcast webhook (disposition callback) data
 // Format: session_id, phone, status, timestamp
 interface SlybroadcastWebhook {
@@ -26,6 +47,14 @@ interface SlybroadcastWebhook {
 
 export async function POST(request: NextRequest) {
   try {
+    // Verify webhook token
+    if (!verifyWebhookToken(request)) {
+      return NextResponse.json(
+        { error: "Invalid webhook token" },
+        { status: 401 }
+      );
+    }
+
     // Slybroadcast sends form data
     const formData = await request.formData();
 
@@ -45,6 +74,22 @@ export async function POST(request: NextRequest) {
     }
 
     const supabase = getSupabase();
+
+    // Additional security: Verify the session_id exists in our activity logs
+    // This ensures we only process callbacks for voicemails we actually sent
+    const { data: existingActivity } = await supabase
+      .from("activity_logs")
+      .select("id")
+      .eq("activity_type", "voicemail_sent")
+      .like("metadata", `%"session_id":"${webhook.session_id}"%`)
+      .limit(1)
+      .single();
+
+    if (!existingActivity) {
+      console.warn(`Unknown session_id in webhook: ${webhook.session_id}`);
+      // Return 200 to prevent retries, but don't process
+      return NextResponse.json({ received: true, processed: false });
+    }
 
     // Normalize phone number for lookup
     const normalizedPhone = webhook.phone.replace(/\D/g, "");

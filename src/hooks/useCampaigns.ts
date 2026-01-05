@@ -138,6 +138,9 @@ export function useCreateCampaign() {
       steps: CampaignStep[];
       schedule_config?: ScheduleConfig;
     }) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
       const { data, error } = await supabase
         .from("campaigns")
         .insert({
@@ -147,6 +150,7 @@ export function useCreateCampaign() {
           status: "draft",
           steps: campaign.steps as unknown as Json,
           schedule_config: campaign.schedule_config as unknown as Json,
+          created_by: user.id,
         })
         .select()
         .single();
@@ -211,12 +215,16 @@ export function useEnrollProspects() {
       campaign_id: string;
       prospect_ids: string[];
     }) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
       const enrollments = prospect_ids.map((prospect_id) => ({
         campaign_id,
         prospect_id,
         status: "enrolled" as const,
         current_step: 0,
         enrolled_at: new Date().toISOString(),
+        user_id: user.id,
       }));
 
       const { data, error } = await supabase

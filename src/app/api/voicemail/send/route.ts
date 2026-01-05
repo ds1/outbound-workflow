@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { slybroadcastService } from "@/services/slybroadcast";
 import { logActivity } from "@/hooks/useActivityLogs";
+import { createClient } from "@/lib/supabase/server";
 
 export interface SendVoicemailRequest {
   phone_number: string;
@@ -14,6 +15,17 @@ export interface SendVoicemailRequest {
 
 export async function POST(request: NextRequest) {
   try {
+    // Verify authentication
+    const supabase = await createClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return NextResponse.json(
+        { error: "Authentication required" },
+        { status: 401 }
+      );
+    }
+
     const body = (await request.json()) as SendVoicemailRequest;
 
     // Validate required fields

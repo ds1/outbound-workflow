@@ -70,9 +70,12 @@ export function useCreateActivityLog() {
 
   return useMutation({
     mutationFn: async (log: ActivityLogInsert) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
       const { data, error } = await supabase
         .from("activity_logs")
-        .insert(log)
+        .insert({ ...log, created_by: user.id })
         .select()
         .single();
 
@@ -97,6 +100,12 @@ export async function logActivity(
   }
 ) {
   const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    console.error("Failed to log activity: Not authenticated");
+    return;
+  }
+
   const { error } = await supabase.from("activity_logs").insert({
     activity_type,
     prospect_id: options?.prospect_id,
@@ -104,6 +113,7 @@ export async function logActivity(
     domain_id: options?.domain_id,
     description: options?.description,
     metadata: options?.metadata || {},
+    created_by: user.id,
   });
 
   if (error) {

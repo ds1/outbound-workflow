@@ -51,9 +51,12 @@ export function useCreateEmailTemplate() {
       preview_text?: string;
       variables?: Json;
     }) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
       const { data, error } = await supabase
         .from("email_templates")
-        .insert(template)
+        .insert({ ...template, created_by: user.id })
         .select()
         .single();
 
@@ -157,9 +160,12 @@ export function useCreateVoicemailTemplate() {
       audio_duration_seconds?: number;
       variables?: Json;
     }) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
       const { data, error } = await supabase
         .from("voicemail_templates")
-        .insert(template)
+        .insert({ ...template, created_by: user.id })
         .select()
         .single();
 
