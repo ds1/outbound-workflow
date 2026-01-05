@@ -1,6 +1,6 @@
 // Web Search Service
-// Uses Serper.dev API for reliable Google search results
-// Sign up at https://serper.dev - 2,500 free searches, then $50 for 50k
+// Uses Brave Search API - Free tier: 2,000 queries/month
+// Sign up at https://brave.com/search/api/
 
 export interface SearchResult {
   title: string;
@@ -14,24 +14,22 @@ export interface WebSearchOptions {
   timeout?: number;
 }
 
-interface SerperOrganicResult {
+interface BraveWebResult {
   title: string;
-  link: string;
-  snippet: string;
-  position: number;
+  url: string;
+  description: string;
 }
 
-interface SerperResponse {
-  organic: SerperOrganicResult[];
-  searchParameters: {
-    q: string;
-    num: number;
+interface BraveSearchResponse {
+  web?: {
+    results: BraveWebResult[];
   };
 }
 
 /**
- * Search Google via Serper.dev API
- * Requires SERPER_API_KEY environment variable
+ * Search via Brave Search API
+ * Requires BRAVE_SEARCH_API_KEY environment variable
+ * Free tier: 2,000 queries/month
  */
 export async function searchGoogle(
   query: string,
@@ -39,10 +37,10 @@ export async function searchGoogle(
 ): Promise<SearchResult[]> {
   const { maxResults = 20, timeout = 30000 } = options;
 
-  const apiKey = process.env.SERPER_API_KEY;
+  const apiKey = process.env.BRAVE_SEARCH_API_KEY;
   if (!apiKey) {
     throw new Error(
-      "SERPER_API_KEY environment variable is required. Sign up at https://serper.dev for 2,500 free searches."
+      "BRAVE_SEARCH_API_KEY environment variable is required. Sign up at https://brave.com/search/api/ (free: 2,000 queries/month)"
     );
   }
 
@@ -50,35 +48,39 @@ export async function searchGoogle(
   const timeoutId = setTimeout(() => controller.abort(), timeout);
 
   try {
-    const response = await fetch("https://google.serper.dev/search", {
-      method: "POST",
-      headers: {
-        "X-API-KEY": apiKey,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        q: query,
-        num: maxResults,
-      }),
-      signal: controller.signal,
+    const params = new URLSearchParams({
+      q: query,
+      count: String(Math.min(maxResults, 20)), // Brave max is 20 per request
     });
+
+    const response = await fetch(
+      `https://api.search.brave.com/res/v1/web/search?${params}`,
+      {
+        method: "GET",
+        headers: {
+          "X-Subscription-Token": apiKey,
+          Accept: "application/json",
+        },
+        signal: controller.signal,
+      }
+    );
 
     if (!response.ok) {
       const errorText = await response.text();
-      throw new Error(`Serper API failed: ${response.status} - ${errorText}`);
+      throw new Error(`Brave Search API failed: ${response.status} - ${errorText}`);
     }
 
-    const data = (await response.json()) as SerperResponse;
+    const data = (await response.json()) as BraveSearchResponse;
 
     const results: SearchResult[] = [];
 
-    for (const item of data.organic || []) {
+    for (const item of data.web?.results || []) {
       try {
-        const urlObj = new URL(item.link);
+        const urlObj = new URL(item.url);
         results.push({
           title: item.title,
-          url: item.link,
-          snippet: item.snippet || "",
+          url: item.url,
+          snippet: item.description || "",
           domain: urlObj.hostname.replace("www.", ""),
         });
       } catch {
