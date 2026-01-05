@@ -1,0 +1,16 @@
+{
+  "functions": {
+    "src/app/api/search/route.ts": {
+      "maxDuration": 60,
+      "memory": 1024
+    },
+    "src/app/api/scraper/route.ts": {
+      "maxDuration": 60,
+      "memory": 1024
+    },
+    "src/app/api/domains/check/route.ts": {
+      "maxDuration": 60,
+      "memory": 1024
+    }
+  }
+}

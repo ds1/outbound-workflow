@@ -107,7 +107,7 @@ export async function POST(request: NextRequest) {
       try {
         const results = await searchGoogle(query, {
           maxResults: maxResults + 5, // Get a few extra to account for filtering
-          timeout: 25000,
+          timeout: 30000,
         });
 
         const filtered = filterResults(results).slice(0, maxResults);
@@ -119,11 +119,14 @@ export async function POST(request: NextRequest) {
         } as RunQueryResponse);
       } catch (error) {
         console.error(`Search failed for query "${query}":`, error);
+        // Return error details for debugging
         return NextResponse.json({
           results: [],
           query,
           resultCount: 0,
-        } as RunQueryResponse);
+          error: error instanceof Error ? error.message : "Search failed",
+          errorDetails: error instanceof Error ? error.stack : undefined,
+        });
       }
     }
 
