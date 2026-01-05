@@ -1,69 +1,52 @@
-// Quick test for the fetch-based DuckDuckGo search
-const cheerio = require("cheerio");
+// Quick test for the Serper.dev Google search API
+// Run with: SERPER_API_KEY=your-key node scripts/test-search.js
 
-async function searchDuckDuckGo(query) {
-  const searchUrl = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(query)}`;
+async function searchGoogle(query) {
+  const apiKey = process.env.SERPER_API_KEY;
+  if (!apiKey) {
+    throw new Error(
+      "SERPER_API_KEY environment variable is required. Sign up at https://serper.dev"
+    );
+  }
 
-  const response = await fetch(searchUrl, {
-    method: "GET",
+  const response = await fetch("https://google.serper.dev/search", {
+    method: "POST",
     headers: {
-      "User-Agent":
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-      Accept:
-        "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-      "Accept-Language": "en-US,en;q=0.5",
+      "X-API-KEY": apiKey,
+      "Content-Type": "application/json",
     },
+    body: JSON.stringify({
+      q: query,
+      num: 10,
+    }),
   });
 
   if (!response.ok) {
-    throw new Error(`DuckDuckGo search failed: ${response.status}`);
+    const errorText = await response.text();
+    throw new Error(`Serper API failed: ${response.status} - ${errorText}`);
   }
 
-  const html = await response.text();
-  const $ = cheerio.load(html);
+  const data = await response.json();
 
-  const results = [];
-
-  $(".result").each((_, element) => {
-    const linkEl = $(element).find(".result__a");
-    const snippetEl = $(element).find(".result__snippet");
-
-    const href = linkEl.attr("href");
-    if (!href) return;
-
-    try {
-      // DuckDuckGo uses redirect URLs, extract the actual URL
-      const urlMatch = href.match(/uddg=([^&]+)/);
-      const actualUrl = urlMatch ? decodeURIComponent(urlMatch[1]) : href;
-
-      // Skip DuckDuckGo redirect/ad URLs
-      if (actualUrl.includes("duckduckgo.com")) {
-        return;
-      }
-
-      const urlObj = new URL(actualUrl);
-      results.push({
-        title: linkEl.text().trim(),
-        url: actualUrl,
-        snippet: snippetEl.text().trim().slice(0, 100) + "...",
-        domain: urlObj.hostname.replace("www.", ""),
-      });
-    } catch {
-      // Invalid URL, skip
-    }
+  return (data.organic || []).map((item) => {
+    const urlObj = new URL(item.link);
+    return {
+      title: item.title,
+      url: item.link,
+      snippet: (item.snippet || "").slice(0, 100) + "...",
+      domain: urlObj.hostname.replace("www.", ""),
+    };
   });
-
-  return results;
 }
 
 async function main() {
-  console.log("Testing DuckDuckGo search with fetch + cheerio...\n");
+  console.log("Testing Serper.dev Google search API...\n");
 
   const query = "dna software";
   console.log(`Query: "${query}"`);
   console.log("---");
 
-  const results = await searchDuckDuckGo(query);
+  const results = await searchGoogle(query);
 
   console.log(`Found ${results.length} results:\n`);
 
