@@ -72,14 +72,16 @@ export async function POST(request: NextRequest) {
         totalPagesScraped = 1;
       }
     } else {
-      // Multiple URLs
-      const multiResult = await scraperService.scrapeMultipleSites(urls, body.options);
-
-      // Extract data from map results
-      for (const [, result] of multiResult.results) {
-        allContacts.push(...result.contacts);
-        totalPagesScraped += result.pages_scraped;
-        allErrors.push(...result.errors);
+      // Multiple URLs - scrape each sequentially
+      for (const url of urls) {
+        try {
+          const result = await scraperService.scrapeContactPage(url, body.options);
+          allContacts.push(...result.contacts);
+          totalPagesScraped += result.pages_scraped;
+          allErrors.push(...result.errors);
+        } catch (err) {
+          allErrors.push(`Failed to scrape ${url}: ${err instanceof Error ? err.message : "Unknown error"}`);
+        }
       }
     }
 
