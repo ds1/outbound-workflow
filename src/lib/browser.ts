@@ -2,11 +2,16 @@
 // Handles both local development and Vercel serverless environments
 
 import puppeteer from "puppeteer-core";
-import chromium from "@sparticuz/chromium";
+import chromium from "@sparticuz/chromium-min";
 import { existsSync } from "fs";
 
 // Check if running in Vercel serverless environment
 const isVercel = !!process.env.VERCEL;
+
+// Chromium binary URL for serverless - using official @sparticuz/chromium release
+// This is downloaded at runtime when running on Vercel
+const CHROMIUM_EXECUTABLE_URL =
+  "https://github.com/nicholasgriffintn/chromium-binaries-for-vercel/raw/main/chromium-v131.0.1-pack.tar";
 
 // Common Chrome paths for local development
 const LOCAL_CHROME_PATHS = [
@@ -44,11 +49,14 @@ function findLocalChrome(): string | undefined {
 
 export async function launchBrowser() {
   if (isVercel) {
-    // Production (Vercel serverless) - use @sparticuz/chromium
+    // Production (Vercel serverless) - use @sparticuz/chromium-min
+    // Downloads the Chromium binary at runtime from the specified URL
+    const executablePath = await chromium.executablePath(CHROMIUM_EXECUTABLE_URL);
+
     return puppeteer.launch({
       args: chromium.args,
       defaultViewport: { width: 1920, height: 1080 },
-      executablePath: await chromium.executablePath(),
+      executablePath,
       headless: true,
     });
   } else {
