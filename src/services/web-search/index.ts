@@ -1,8 +1,8 @@
 // Web Search Service
-// Uses Puppeteer to search DuckDuckGo and extract results
+// Uses fetch + cheerio to search DuckDuckGo and extract results
 // (DuckDuckGo is used instead of Google because Google blocks automated searches with CAPTCHA)
 
-import { launchBrowser } from "@/lib/browser";
+import * as cheerio from "cheerio";
 
 export interface SearchResult {
   title: string;
@@ -18,7 +18,7 @@ export interface WebSearchOptions {
 
 /**
  * Search DuckDuckGo HTML and extract organic results
- * Uses the HTML version which is more scraping-friendly
+ * Uses fetch + cheerio for reliable serverless execution
  */
 export async function searchGoogle(
   query: string,
@@ -26,67 +26,65 @@ export async function searchGoogle(
 ): Promise<SearchResult[]> {
   const { maxResults = 20, timeout = 30000 } = options;
 
-  const browser = await launchBrowser();
+  const searchUrl = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(query)}`;
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeout);
 
   try {
-    const page = await browser.newPage();
-
-    await page.setUserAgent(
-      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-    );
-
-    // Use DuckDuckGo HTML search (more stable, no JavaScript required)
-    const searchUrl = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(query)}`;
-    await page.goto(searchUrl, {
-      waitUntil: "networkidle2",
-      timeout,
+    const response = await fetch(searchUrl, {
+      method: "GET",
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        Accept:
+          "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+        "Accept-Language": "en-US,en;q=0.5",
+      },
+      signal: controller.signal,
     });
 
-    // Extract search results
-    const results = await page.evaluate(() => {
-      const items: Array<{
-        title: string;
-        url: string;
-        domain: string;
-        snippet: string;
-      }> = [];
+    if (!response.ok) {
+      throw new Error(`DuckDuckGo search failed: ${response.status}`);
+    }
 
-      const resultElements = document.querySelectorAll(".result");
-      resultElements.forEach((el) => {
-        const linkEl = el.querySelector(".result__a") as HTMLAnchorElement;
-        const snippetEl = el.querySelector(".result__snippet");
+    const html = await response.text();
+    const $ = cheerio.load(html);
 
-        if (linkEl && linkEl.href) {
-          try {
-            const url = linkEl.href;
-            // DuckDuckGo uses redirect URLs, extract the actual URL
-            const urlMatch = url.match(/uddg=([^&]+)/);
-            const actualUrl = urlMatch ? decodeURIComponent(urlMatch[1]) : url;
+    const results: SearchResult[] = [];
 
-            // Skip DuckDuckGo redirect/ad URLs that don't resolve to real sites
-            if (actualUrl.includes("duckduckgo.com")) {
-              return;
-            }
+    $(".result").each((_, element) => {
+      const linkEl = $(element).find(".result__a");
+      const snippetEl = $(element).find(".result__snippet");
 
-            const urlObj = new URL(actualUrl);
-            items.push({
-              title: linkEl.textContent?.trim() || "",
-              url: actualUrl,
-              snippet: snippetEl?.textContent?.trim() || "",
-              domain: urlObj.hostname.replace("www.", ""),
-            });
-          } catch {
-            // Invalid URL, skip
-          }
+      const href = linkEl.attr("href");
+      if (!href) return;
+
+      try {
+        // DuckDuckGo uses redirect URLs, extract the actual URL
+        const urlMatch = href.match(/uddg=([^&]+)/);
+        const actualUrl = urlMatch ? decodeURIComponent(urlMatch[1]) : href;
+
+        // Skip DuckDuckGo redirect/ad URLs that don't resolve to real sites
+        if (actualUrl.includes("duckduckgo.com")) {
+          return;
         }
-      });
 
-      return items;
+        const urlObj = new URL(actualUrl);
+        results.push({
+          title: linkEl.text().trim(),
+          url: actualUrl,
+          snippet: snippetEl.text().trim(),
+          domain: urlObj.hostname.replace("www.", ""),
+        });
+      } catch {
+        // Invalid URL, skip
+      }
     });
 
     return results.slice(0, maxResults);
   } finally {
-    await browser.close();
+    clearTimeout(timeoutId);
   }
 }
 
