@@ -54,7 +54,13 @@
       "Bash(\"$f\" == *\"cp C\"* ]])",
       "Bash(then rm -f \"src/app/$f\")",
       "Bash(fi)",
-      "WebFetch(domain:deepoutbound.com)"
+      "WebFetch(domain:deepoutbound.com)",
+      "Bash(git restore:*)",
+      "Bash(node scripts/test-search.js:*)",
+      "Bash(node scripts/test-search-parse.js:*)",
+      "Bash(node scripts/test-api-flow.js:*)",
+      "Bash(node scripts/test-short-domains.js:*)",
+      "Bash(node -e:*)"
     ]
   }
 }

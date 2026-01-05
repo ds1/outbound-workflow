@@ -1,0 +1,101 @@
+[
+  {
+    "email": "shop@meteomatics.com",
+    "phone": null,
+    "first_name": null,
+    "last_name": null,
+    "company_name": "Meteomatics",
+    "source": "scraped",
+    "notes": "Weather Drones - Swiss company making autonomous weather drones"
+  },
+  {
+    "email": "mfengler@meteomatics.com",
+    "phone": null,
+    "first_name": "M",
+    "last_name": "Fengler",
+    "company_name": "Meteomatics",
+    "source": "scraped",
+    "notes": "Weather Drones - Personal contact at Meteomatics"
+  },
+  {
+    "email": "quality@meteomatics.com",
+    "phone": null,
+    "first_name": null,
+    "last_name": null,
+    "company_name": "Meteomatics",
+    "source": "scraped",
+    "notes": "Weather Drones - Quality management department"
+  },
+  {
+    "email": "sales@zenadrone.com",
+    "phone": null,
+    "first_name": null,
+    "last_name": null,
+    "company_name": "ZenaDrone",
+    "source": "scraped",
+    "notes": "Weather Drones - Drone company with weather monitoring capabilities"
+  },
+  {
+    "email": "sales@blackswifttech.com",
+    "phone": null,
+    "first_name": null,
+    "last_name": null,
+    "company_name": "Black Swift Technologies",
+    "source": "scraped",
+    "notes": "Weather Drones - NOAA partner for hurricane data collection"
+  },
+  {
+    "email": "info@blackswifttech.com",
+    "phone": null,
+    "first_name": null,
+    "last_name": null,
+    "company_name": "Black Swift Technologies",
+    "source": "scraped",
+    "notes": "Weather Drones - NOAA partner for hurricane data collection"
+  },
+  {
+    "email": "sales@tomorrow.io",
+    "phone": null,
+    "first_name": null,
+    "last_name": null,
+    "company_name": "Tomorrow.io",
+    "source": "scraped",
+    "notes": "Weather Analytics - Leading weather intelligence platform"
+  },
+  {
+    "email": "orders@davisinstruments.com",
+    "phone": "8006783669",
+    "first_name": null,
+    "last_name": null,
+    "company_name": "Davis Instruments",
+    "source": "scraped",
+    "notes": "Weather Sensors - Major weather station manufacturer"
+  },
+  {
+    "email": "info@davisinstruments.com",
+    "phone": null,
+    "first_name": null,
+    "last_name": null,
+    "company_name": "Davis Instruments",
+    "source": "scraped",
+    "notes": "Weather Sensors - Major weather station manufacturer"
+  },
+  {
+    "email": "sales@sofarocean.com",
+    "phone": "4152302299",
+    "first_name": null,
+    "last_name": null,
+    "company_name": "Sofar Ocean",
+    "source": "scraped",
+    "notes": "Ocean Weather Robots - Marine weather buoys and sensors"
+  },
+  {
+    "email": "opendata@sofarocean.com",
+    "phone": null,
+    "first_name": null,
+    "last_name": null,
+    "company_name": "Sofar Ocean",
+    "source": "scraped",
+    "notes": "Ocean Weather Robots - Open data team"
+  }
+]
