@@ -97,11 +97,16 @@ export async function searchGoogle(
 export function generateUpgradeSearchQueries(domainName: string): string[] {
   const queries: string[] = [];
 
-  // Split camelCase to get keywords
+  // Split camelCase to get keywords, but always include the full domain name
   const words = domainName
     .replace(/([a-z])([A-Z])/g, "$1 $2")
     .toLowerCase();
-  const keywordPhrase = words.split(/\s+/).filter((w) => w.length > 2).join(" ");
+
+  // Use the full domain name as keyword phrase, regardless of length
+  // Only filter out very short words (1-2 chars) if there are longer words available
+  const wordList = words.split(/\s+/);
+  const longWords = wordList.filter((w) => w.length > 2);
+  const keywordPhrase = longWords.length > 0 ? longWords.join(" ") : words.trim();
 
   // Search for companies using common prefix patterns
   queries.push(`"get${domainName}" OR "try${domainName}" OR "use${domainName}"`);
@@ -116,9 +121,11 @@ export function generateUpgradeSearchQueries(domainName: string): string[] {
   }
 
   // Search for companies in the space that may want the premium .com
-  queries.push(`${keywordPhrase} company -"${domainName}.com"`);
-  queries.push(`${keywordPhrase} startup website`);
-  queries.push(`${keywordPhrase} brand new company`);
+  if (keywordPhrase) {
+    queries.push(`${keywordPhrase} company -"${domainName}.com"`);
+    queries.push(`${keywordPhrase} startup website`);
+    queries.push(`${keywordPhrase} brand new company`);
+  }
 
   return queries;
 }
@@ -127,14 +134,15 @@ export function generateUpgradeSearchQueries(domainName: string): string[] {
  * Generate search queries for finding SEO/PPC competitors
  */
 export function generateSEOSearchQueries(domainName: string): string[] {
-  // Split camelCase to get keywords
+  // Split camelCase to get keywords, preserving short domain names
   const words = domainName
     .replace(/([a-z])([A-Z])/g, "$1 $2")
-    .toLowerCase()
-    .split(/\s+/)
-    .filter((w) => w.length > 2);
+    .toLowerCase();
 
-  const keywordPhrase = words.join(" ");
+  // Use the full domain name as keyword, falling back to original if all words are short
+  const wordList = words.split(/\s+/);
+  const longWords = wordList.filter((w) => w.length > 2);
+  const keywordPhrase = longWords.length > 0 ? longWords.join(" ") : domainName.toLowerCase();
 
   return [
     keywordPhrase,
@@ -150,13 +158,15 @@ export function generateSEOSearchQueries(domainName: string): string[] {
  * Generate search queries for finding emerging startups
  */
 export function generateStartupSearchQueries(domainName: string): string[] {
+  // Split camelCase to get keywords, preserving short domain names
   const words = domainName
     .replace(/([a-z])([A-Z])/g, "$1 $2")
-    .toLowerCase()
-    .split(/\s+/)
-    .filter((w) => w.length > 2);
+    .toLowerCase();
 
-  const keywordPhrase = words.join(" ");
+  // Use the full domain name as keyword, falling back to original if all words are short
+  const wordList = words.split(/\s+/);
+  const longWords = wordList.filter((w) => w.length > 2);
+  const keywordPhrase = longWords.length > 0 ? longWords.join(" ") : domainName.toLowerCase();
 
   return [
     `${keywordPhrase} startup`,

@@ -135,31 +135,36 @@ export function generateSEOSearchQueries(domain: Domain): string[] {
   const baseName = domain.name.toLowerCase();
 
   // Split camelCase or hyphenated names
-  const words = baseName
+  const processedName = baseName
     .replace(/([a-z])([A-Z])/g, '$1 $2')
     .replace(/-/g, ' ')
-    .toLowerCase()
-    .split(/\s+/)
-    .filter(w => w.length > 2);
+    .toLowerCase();
+
+  const wordList = processedName.split(/\s+/);
+  const longWords = wordList.filter(w => w.length > 2);
+
+  // Use long words if available, otherwise fall back to the original domain name
+  const words = longWords.length > 0 ? longWords : [baseName];
 
   const queries: string[] = [];
 
-  // Full name as query
+  // Full name as query (always include)
   queries.push(words.join(' '));
 
-  // Individual significant words
+  // Individual significant words (for longer words)
   for (const word of words) {
     if (word.length >= 4) {
       queries.push(word);
     }
   }
 
-  // Combinations
+  // Combinations (if multiple words)
   if (words.length >= 2) {
     queries.push(`${words[0]} ${words[1]}`);
   }
 
-  return [...new Set(queries)];
+  // Filter out empty strings and deduplicate
+  return [...new Set(queries.filter(q => q.trim().length > 0))];
 }
 
 /**
