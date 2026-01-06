@@ -1,0 +1,252 @@
+/**
+ * Deep Outbound brand colors
+ * Optimized for readability with high contrast
+ */
+
+/* Light mode - deep blue primary */
+:root {
+  --ifm-color-primary: #1e5082;
+  --ifm-color-primary-dark: #1a4775;
+  --ifm-color-primary-darker: #18436e;
+  --ifm-color-primary-darkest: #13375b;
+  --ifm-color-primary-light: #22598f;
+  --ifm-color-primary-lighter: #245d96;
+  --ifm-color-primary-lightest: #2a6ba9;
+  --ifm-code-font-size: 95%;
+  --docusaurus-highlighted-code-line-bg: rgba(30, 80, 130, 0.1);
+
+  /* Increase base font size for readability */
+  --ifm-font-size-base: 18px;
+  --ifm-line-height-base: 1.75;
+
+  /* Link colors */
+  --ifm-link-color: #1e5082;
+  --ifm-link-hover-color: #2a6ba9;
+}
+
+/* Dark mode - high contrast for readability */
+[data-theme='dark'] {
+  /* Bright blue for links and accents - high visibility */
+  --ifm-color-primary: #7dd3fc;
+  --ifm-color-primary-dark: #5ec4f7;
+  --ifm-color-primary-darker: #4ebcf5;
+  --ifm-color-primary-darkest: #1fa8ed;
+  --ifm-color-primary-light: #9cdffd;
+  --ifm-color-primary-lighter: #ace4fe;
+  --ifm-color-primary-lightest: #cbedfe;
+  --docusaurus-highlighted-code-line-bg: rgba(125, 211, 252, 0.15);
+
+  /* Dark mode backgrounds matching Deep Outbound landing page */
+  --ifm-background-color: #0a1525;
+  --ifm-background-surface-color: #0d1a2d;
+  --ifm-navbar-background-color: #0a1525;
+  --ifm-footer-background-color: #050d18;
+
+  /* HIGH CONTRAST text colors for readability */
+  --ifm-font-color-base: #f1f5f9;  /* Near white - slate-100 */
+  --ifm-heading-color: #ffffff;    /* Pure white for headings */
+
+  /* Card/surface colors */
+  --ifm-card-background-color: #0d1a2d;
+
+  /* Border colors */
+  --ifm-toc-border-color: rgba(255, 255, 255, 0.15);
+  --ifm-color-emphasis-300: rgba(255, 255, 255, 0.15);
+
+  /* Bright link colors for visibility */
+  --ifm-link-color: #7dd3fc;
+  --ifm-link-hover-color: #bae6fd;
+
+  /* Menu colors - high contrast */
+  --ifm-menu-color: #e2e8f0;  /* Bright slate-200 */
+  --ifm-menu-color-active: #7dd3fc;
+  --ifm-menu-color-background-active: rgba(125, 211, 252, 0.15);
+
+  /* Navbar link colors - bright for visibility */
+  --ifm-navbar-link-color: #e2e8f0;
+  --ifm-navbar-link-hover-color: #ffffff;
+
+  /* Muted text should still be readable */
+  --ifm-color-emphasis-600: #cbd5e1;  /* slate-300 */
+  --ifm-color-emphasis-700: #e2e8f0;  /* slate-200 */
+  --ifm-color-emphasis-800: #f1f5f9;  /* slate-100 */
+
+  /* Increase font size for dark mode too */
+  --ifm-font-size-base: 18px;
+  --ifm-line-height-base: 1.75;
+}
+
+/* Larger, more readable headings */
+h1 {
+  font-size: 2.25rem !important;
+}
+
+h2 {
+  font-size: 1.75rem !important;
+}
+
+h3 {
+  font-size: 1.35rem !important;
+}
+
+/* Ensure article content is readable */
+article {
+  font-size: var(--ifm-font-size-base);
+  line-height: var(--ifm-line-height-base);
+}
+
+/* Make paragraphs more readable */
+[data-theme='dark'] p {
+  color: #e2e8f0;
+}
+
+/* List items should be bright too */
+[data-theme='dark'] li {
+  color: #e2e8f0;
+}
+
+/* Table text */
+[data-theme='dark'] td,
+[data-theme='dark'] th {
+  color: #e2e8f0;
+}
+
+/* Code inline - high contrast */
+[data-theme='dark'] code {
+  background-color: rgba(125, 211, 252, 0.1);
+  color: #bae6fd;
+  border: 1px solid rgba(125, 211, 252, 0.2);
+}
+
+/* Hero-like styling for dark mode headers */
+[data-theme='dark'] .hero {
+  background: linear-gradient(to bottom, #0d1a2d 0%, #0a1525 100%);
+}
+
+/* Navbar styling */
+[data-theme='dark'] .navbar {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+[data-theme='dark'] .navbar__title {
+  color: #ffffff;
+  font-weight: 600;
+}
+
+/* Footer styling */
+[data-theme='dark'] .footer {
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+[data-theme='dark'] .footer__title {
+  color: #ffffff;
+}
+
+[data-theme='dark'] .footer__link-item {
+  color: #cbd5e1;
+}
+
+[data-theme='dark'] .footer__link-item:hover {
+  color: #7dd3fc;
+}
+
+/* Sidebar styling for dark mode */
+[data-theme='dark'] .menu {
+  background-color: transparent;
+}
+
+[data-theme='dark'] .menu__link {
+  color: #e2e8f0;
+  font-size: 1rem;
+}
+
+[data-theme='dark'] .menu__link:hover {
+  color: #7dd3fc;
+}
+
+[data-theme='dark'] .menu__link--active {
+  color: #7dd3fc;
+  font-weight: 600;
+}
+
+/* Table of contents */
+[data-theme='dark'] .table-of-contents__link {
+  color: #cbd5e1;
+}
+
+[data-theme='dark'] .table-of-contents__link--active {
+  color: #7dd3fc;
+  font-weight: 600;
+}
+
+/* Code blocks - ensure readability */
+[data-theme='dark'] .prism-code {
+  background-color: #050d18 !important;
+  font-size: 0.95rem;
+}
+
+/* Admonitions/callouts with blue theme - high contrast */
+[data-theme='dark'] .alert {
+  color: #f1f5f9;
+}
+
+[data-theme='dark'] .alert--info {
+  --ifm-alert-background-color: rgba(125, 211, 252, 0.1);
+  --ifm-alert-border-color: rgba(125, 211, 252, 0.4);
+  --ifm-alert-foreground-color: #f1f5f9;
+}
+
+[data-theme='dark'] .alert--warning {
+  --ifm-alert-foreground-color: #f1f5f9;
+}
+
+[data-theme='dark'] .alert--danger {
+  --ifm-alert-foreground-color: #f1f5f9;
+}
+
+/* Buttons - high contrast */
+.button--primary {
+  background-color: var(--ifm-color-primary);
+  border-color: var(--ifm-color-primary);
+  font-weight: 600;
+}
+
+.button--primary:hover {
+  background-color: var(--ifm-color-primary-light);
+  border-color: var(--ifm-color-primary-light);
+}
+
+[data-theme='dark'] .button--primary {
+  color: #0a1525;
+}
+
+/* Breadcrumbs */
+[data-theme='dark'] .breadcrumbs__link {
+  color: #cbd5e1;
+}
+
+/* Pagination */
+[data-theme='dark'] .pagination-nav__label {
+  color: #e2e8f0;
+}
+
+[data-theme='dark'] .pagination-nav__sublabel {
+  color: #94a3b8;
+}
+
+/* Search */
+[data-theme='dark'] .DocSearch-Button {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #e2e8f0;
+}
+
+/* Blockquotes */
+[data-theme='dark'] blockquote {
+  border-left-color: #7dd3fc;
+  color: #cbd5e1;
+}
+
+/* Strong/bold text should be white */
+[data-theme='dark'] strong {
+  color: #ffffff;
+}

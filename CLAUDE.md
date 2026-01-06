@@ -126,11 +126,49 @@ outbound-workflow/
 │   └── migrations/
 │       ├── 001_initial_schema.sql    # Core database schema
 │       └── 002_cost_tracking.sql     # Cost logs, notifications, user settings
-├── docs/
-│   └── USER_GUIDE.md                 # User documentation
+├── docs/                             # Docusaurus documentation site
+│   ├── docs/                         # Markdown documentation files
+│   │   ├── intro.md                  # Homepage
+│   │   ├── getting-started/          # Quick start, installation, config
+│   │   ├── features/                 # Feature documentation
+│   │   ├── tutorials/                # Step-by-step tutorials
+│   │   ├── reference/                # API, variables, troubleshooting
+│   │   └── changelog.md              # Release notes
+│   ├── src/css/custom.css            # Brand colors and styling
+│   ├── static/img/                   # Logo, favicon, images
+│   ├── docusaurus.config.ts          # Site configuration
+│   ├── sidebars.ts                   # Navigation structure
+│   └── package.json                  # Docusaurus dependencies
 ├── .env.example                      # Environment template
 └── .env.local                        # Local environment (gitignored)
 ```
+
+## Documentation & Feedback
+
+### Public Documentation Site
+- **URL**: https://docs.deepoutbound.com
+- **Platform**: Docusaurus 3.x (static site generator)
+- **Hosting**: Vercel (project: `deepoutbound-docs`)
+- **Source**: `docs/` folder in this repository
+
+Documentation structure:
+- **Getting Started**: Quick start, installation, configuration
+- **Features**: Domains, leads, campaigns, templates, voicemail, escalations, analytics
+- **Tutorials**: Step-by-step guides for common workflows
+- **Reference**: API, template variables, troubleshooting, FAQ
+
+### Community Feedback Portal
+- **URL**: https://feedback.deepoutbound.com
+- **Platform**: Canny (SaaS)
+- **Features**: Feature requests, bug reports, public roadmap
+- **Email verification**: Required for posting
+
+### Styling
+The docs use Deep Outbound brand colors with high contrast for readability:
+- Dark mode: `#0a1525` background, `#7dd3fc` primary (sky blue)
+- Light mode: `#1e5082` primary (deep blue)
+- Font size: 18px base with 1.75 line height
+- Optimized for older audiences with larger text
 
 ## Database Schema
 
@@ -467,8 +505,6 @@ npm run lint         # Run ESLint
 20. **Sidebar Active Jobs** - shows all jobs (running + done), click to maximize/reopen
 
 ## UX Improvements Roadmap
-
-See `docs/UX_IMPROVEMENTS.md` for the full prioritized list of planned improvements.
 
 ### Priority Summary
 
