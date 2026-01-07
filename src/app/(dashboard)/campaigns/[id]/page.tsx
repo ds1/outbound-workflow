@@ -19,6 +19,7 @@ import {
   Send,
   MousePointer,
   Eye,
+  Pencil,
 } from "lucide-react";
 import {
   useCampaignWithProspects,
@@ -135,10 +136,18 @@ export default function CampaignDetailPage({
 
         <div className="flex gap-2">
           {campaign.status === "draft" && (
-            <Button onClick={handleStart} disabled={startCampaign.isPending}>
-              <Play className="mr-2 h-4 w-4" />
-              Start Campaign
-            </Button>
+            <>
+              <Link href={`/campaigns/${campaign.id}/edit`}>
+                <Button variant="outline">
+                  <Pencil className="mr-2 h-4 w-4" />
+                  Edit
+                </Button>
+              </Link>
+              <Button onClick={handleStart} disabled={startCampaign.isPending}>
+                <Play className="mr-2 h-4 w-4" />
+                Start Campaign
+              </Button>
+            </>
           )}
           {campaign.status === "active" && (
             <Button variant="outline" onClick={handlePause} disabled={pauseCampaign.isPending}>

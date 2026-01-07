@@ -20,9 +20,15 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Plus, Trash2, Mail, Phone, ArrowRight, ArrowLeft, Check } from "lucide-react";
-import { useCreateCampaign, useEnrollProspects, type CampaignStep, type ScheduleConfig } from "@/hooks/useCampaigns";
+import { useCreateCampaign, useUpdateCampaign, useEnrollProspects, type CampaignStep, type ScheduleConfig } from "@/hooks/useCampaigns";
 import { useEmailTemplates, useVoicemailTemplates } from "@/hooks/useTemplates";
 import { useLeads } from "@/hooks/useLeads";
+import { Campaign, Json } from "@/types/database";
+
+interface CampaignWizardProps {
+  campaign?: Campaign;
+  mode?: "create" | "edit";
+}
 
 const stepSchema = z.object({
   step: z.number(),
@@ -65,16 +71,32 @@ const TIMEZONES = [
   { value: "America/Los_Angeles", label: "Pacific (PT)" },
 ];
 
-export function CampaignWizard() {
+export function CampaignWizard({ campaign, mode = "create" }: CampaignWizardProps) {
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState(1);
+  const isEditMode = mode === "edit" && campaign;
 
   const createCampaign = useCreateCampaign();
+  const updateCampaign = useUpdateCampaign();
   const enrollProspects = useEnrollProspects();
 
   const { data: emailTemplates = [] } = useEmailTemplates();
   const { data: voicemailTemplates = [] } = useVoicemailTemplates();
   const { data: leads = [] } = useLeads();
+
+  // Parse existing campaign data for edit mode
+  const existingSteps = isEditMode && campaign.steps
+    ? (campaign.steps as unknown as CampaignStep[])
+    : [{ step: 1, type: "email" as const, template_id: "", delay_days: 0 }];
+
+  const existingSchedule = isEditMode && campaign.schedule_config
+    ? (campaign.schedule_config as unknown as ScheduleConfig)
+    : {
+        timezone: "America/New_York",
+        send_days: ["monday", "tuesday", "wednesday", "thursday", "friday"],
+        start_hour: 9,
+        end_hour: 17,
+      };
 
   const {
     register,
@@ -86,16 +108,11 @@ export function CampaignWizard() {
   } = useForm<CampaignFormData>({
     resolver: zodResolver(campaignSchema),
     defaultValues: {
-      name: "",
-      description: "",
-      type: "email",
-      steps: [{ step: 1, type: "email", template_id: "", delay_days: 0 }],
-      schedule_config: {
-        timezone: "America/New_York",
-        send_days: ["monday", "tuesday", "wednesday", "thursday", "friday"],
-        start_hour: 9,
-        end_hour: 17,
-      },
+      name: isEditMode ? campaign.name : "",
+      description: isEditMode ? campaign.description || "" : "",
+      type: isEditMode ? campaign.type : "email",
+      steps: existingSteps,
+      schedule_config: existingSchedule,
       prospect_ids: [],
     },
   });
@@ -112,25 +129,41 @@ export function CampaignWizard() {
 
   const onSubmit = async (data: CampaignFormData) => {
     try {
-      const campaign = await createCampaign.mutateAsync({
-        name: data.name,
-        description: data.description,
-        type: data.type,
-        steps: data.steps as CampaignStep[],
-        schedule_config: data.schedule_config as ScheduleConfig,
-      });
-
-      if (data.prospect_ids.length > 0) {
-        await enrollProspects.mutateAsync({
-          campaign_id: campaign.id,
-          prospect_ids: data.prospect_ids,
+      if (isEditMode) {
+        // Update existing campaign
+        await updateCampaign.mutateAsync({
+          id: campaign.id,
+          name: data.name,
+          description: data.description,
+          type: data.type,
+          steps: data.steps as unknown as Json,
+          schedule_config: data.schedule_config as unknown as Json,
         });
-      }
 
-      toast.success("Campaign created successfully");
-      router.push(`/campaigns/${campaign.id}`);
+        toast.success("Campaign updated successfully");
+        router.push(`/campaigns/${campaign.id}`);
+      } else {
+        // Create new campaign
+        const newCampaign = await createCampaign.mutateAsync({
+          name: data.name,
+          description: data.description,
+          type: data.type,
+          steps: data.steps,
+          schedule_config: data.schedule_config,
+        });
+
+        if (data.prospect_ids.length > 0) {
+          await enrollProspects.mutateAsync({
+            campaign_id: newCampaign.id,
+            prospect_ids: data.prospect_ids,
+          });
+        }
+
+        toast.success("Campaign created successfully");
+        router.push(`/campaigns/${newCampaign.id}`);
+      }
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to create campaign");
+      toast.error(error instanceof Error ? error.message : `Failed to ${isEditMode ? "update" : "create"} campaign`);
     }
   };
 
@@ -559,9 +592,12 @@ export function CampaignWizard() {
         ) : (
           <Button
             type="submit"
-            disabled={createCampaign.isPending || enrollProspects.isPending}
+            disabled={createCampaign.isPending || updateCampaign.isPending || enrollProspects.isPending}
           >
-            {createCampaign.isPending ? "Creating..." : "Create Campaign"}
+            {isEditMode
+              ? (updateCampaign.isPending ? "Updating..." : "Update Campaign")
+              : (createCampaign.isPending ? "Creating..." : "Create Campaign")
+            }
           </Button>
         )}
       </div>

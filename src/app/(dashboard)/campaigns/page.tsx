@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Mail, Phone, Zap } from "lucide-react";
+import { Plus, Mail, Phone, Zap, Pencil } from "lucide-react";
 import { useCampaigns, useCampaignStats } from "@/hooks/useCampaigns";
 
 const statusColors: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
@@ -138,11 +138,21 @@ export default function CampaignsPage() {
                       <TableCell>{campaign.total_sent || 0}</TableCell>
                       <TableCell>{openRate}%</TableCell>
                       <TableCell>
-                        <Link href={`/campaigns/${campaign.id}`}>
-                          <Button variant="ghost" size="sm">
-                            View
-                          </Button>
-                        </Link>
+                        <div className="flex items-center gap-1">
+                          {campaign.status === "draft" && (
+                            <Link href={`/campaigns/${campaign.id}/edit`}>
+                              <Button variant="ghost" size="sm">
+                                <Pencil className="h-4 w-4 mr-1" />
+                                Edit
+                              </Button>
+                            </Link>
+                          )}
+                          <Link href={`/campaigns/${campaign.id}`}>
+                            <Button variant="ghost" size="sm">
+                              View
+                            </Button>
+                          </Link>
+                        </div>
                       </TableCell>
                     </TableRow>
                   );
