@@ -130,6 +130,118 @@
     }
     .value-prop h3 { color: #7dd3fc; font-size: 1.5rem; margin-bottom: 1rem; }
     .value-prop p { color: #94a3b8; max-width: 600px; margin: 0 auto; }
+
+    /* Two-column layout with sticky sidebar */
+    .page-layout {
+      display: grid;
+      grid-template-columns: 1fr 420px;
+      gap: 2rem;
+      align-items: start;
+    }
+    .main-content {
+      min-width: 0;
+    }
+    .sticky-sidebar {
+      position: sticky;
+      top: 1rem;
+      max-height: calc(100vh - 2rem);
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: #475569 #1e293b;
+    }
+    .sticky-sidebar::-webkit-scrollbar {
+      width: 6px;
+    }
+    .sticky-sidebar::-webkit-scrollbar-track {
+      background: #1e293b;
+      border-radius: 3px;
+    }
+    .sticky-sidebar::-webkit-scrollbar-thumb {
+      background: #475569;
+      border-radius: 3px;
+    }
+    .sticky-sidebar::-webkit-scrollbar-thumb:hover {
+      background: #64748b;
+    }
+    .sidebar-card {
+      background: #1e293b;
+      border-radius: 8px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      border: 1px solid #334155;
+    }
+    .sidebar-card h3 {
+      margin-top: 0;
+      margin-bottom: 0.75rem;
+      font-size: 1rem;
+      color: #7dd3fc;
+    }
+    .sidebar-card table {
+      font-size: 0.8rem;
+      margin: 0;
+    }
+    .sidebar-card th, .sidebar-card td {
+      padding: 0.4rem 0.5rem;
+    }
+    .sidebar-stat {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+    .sidebar-stat .stat {
+      padding: 0.5rem;
+      background: #0f172a;
+      border-radius: 6px;
+    }
+    .sidebar-stat .stat-value {
+      font-size: 1.25rem;
+    }
+    .sidebar-stat .stat-label {
+      font-size: 0.7rem;
+    }
+    .sidebar-assumptions {
+      font-size: 0.75rem;
+      color: #94a3b8;
+    }
+    .sidebar-assumptions p {
+      margin: 0.25rem 0;
+    }
+    .sidebar-assumptions input.editable {
+      width: 50px;
+      font-size: 0.75rem;
+      padding: 0.15rem 0.25rem;
+    }
+    .target-box {
+      background: linear-gradient(135deg, #1e3a5f 0%, #0f172a 100%);
+      border: 2px solid #7dd3fc;
+      border-radius: 8px;
+      padding: 1rem;
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+    .target-box .target-label {
+      font-size: 0.75rem;
+      color: #94a3b8;
+      margin-bottom: 0.25rem;
+    }
+    .target-box .target-value {
+      font-size: 2rem;
+      font-weight: bold;
+    }
+    .target-box .target-gap {
+      font-size: 0.875rem;
+      margin-top: 0.25rem;
+    }
+    @media (max-width: 1200px) {
+      .page-layout {
+        grid-template-columns: 1fr;
+      }
+      .sticky-sidebar {
+        position: static;
+        max-height: none;
+      }
+    }
   </style>
 </head>
 <body>
@@ -145,26 +257,6 @@
     <a href="#projections">Projections</a>
   </nav>
 
-  <!-- Summary Stats -->
-  <div class="grid">
-    <div class="card stat">
-      <div class="stat-value" id="total-fixed-display">$197.50</div>
-      <div class="stat-label">Fixed Monthly Costs</div>
-    </div>
-    <div class="card stat">
-      <div class="stat-value" id="breakeven-display">4 users</div>
-      <div class="stat-label">Breakeven Pro Users</div>
-    </div>
-    <div class="card stat">
-      <div class="stat-value" id="year1-profit-display">$5,000</div>
-      <div class="stat-label">Year 1 Profit (est)</div>
-    </div>
-    <div class="card stat">
-      <div class="stat-value" id="standard-price-display">$49</div>
-      <div class="stat-label">Standard Monthly Price</div>
-    </div>
-  </div>
-
   <!-- Value Proposition -->
   <div class="value-prop" id="value-prop">
     <h3>Core Value: AI-Powered Lead Discovery</h3>
@@ -176,6 +268,10 @@
   <div class="card" style="background: linear-gradient(135deg, #065f46 0%, #0f172a 100%); border: 1px solid #4ade80; text-align: center; margin-bottom: 1rem;">
     <p style="margin: 0; font-size: 1.1rem;"><span style="color: #4ade80; font-weight: bold;">Free Trial:</span> All plans include <strong>100 credits</strong> to try before you subscribe</p>
   </div>
+
+  <!-- Two-column layout -->
+  <div class="page-layout">
+    <div class="main-content">
 
   <!-- Pricing Tiers -->
   <h2 id="tiers">Pricing Tiers</h2>
@@ -577,55 +673,6 @@
     </tbody>
   </table>
 
-  <!-- Revenue Projections -->
-  <h2 id="projections">Revenue Projections (Your Scenario)</h2>
-  <div class="card">
-    <h3>Assumptions (edit to model your scenario)</h3>
-    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem;">
-      <div>
-        <p>Monthly trial signups: <input type="number" class="editable" id="proj-signups" value="25" step="5" style="width:80px"></p>
-        <p>Trial → Paid conversion: <input type="number" class="editable" id="proj-paid-conversion" value="20" step="1" style="width:70px">%</p>
-        <p>Tier mix (Std/Pro/Adv): <input type="number" class="editable" id="proj-standard-pct" value="50" style="width:45px">/<input type="number" class="editable" id="proj-pro-pct" value="35" style="width:45px">/<input type="number" class="editable" id="proj-advanced-pct" value="15" style="width:45px">%</p>
-      </div>
-      <div>
-        <p>Paid users buying credits: <input type="number" class="editable" id="proj-credit-buyers-pct" value="40" step="5" style="width:70px">%</p>
-        <p>Avg credit purchase: $<input type="number" class="editable" id="proj-credit-purchase" value="30" step="5" style="width:80px"></p>
-        <p>Monthly churn: <input type="number" class="editable" id="proj-churn" value="5" step="1" style="width:70px">%</p>
-      </div>
-      <div>
-        <p>Payment processing: <input type="number" class="editable" id="proj-payment-fee" value="3" step="0.5" style="width:70px">%</p>
-        <p class="help-text" style="margin-top: 1rem;">Stripe charges ~2.9% + $0.30</p>
-      </div>
-    </div>
-    <p class="help-text">All users start with 100 credits free trial, then choose a paid tier. Domain investing ROI is high (6-7 figure sales).</p>
-  </div>
-
-  <table>
-    <thead>
-      <tr>
-        <th>Month</th>
-        <th class="number">Std</th>
-        <th class="number">Pro</th>
-        <th class="number">Adv</th>
-        <th class="number">Gross Rev</th>
-        <th class="number">- Fees (3%)</th>
-        <th class="number">Net Rev</th>
-        <th class="number">- Costs</th>
-        <th class="number">Profit</th>
-        <th class="number">Cumulative</th>
-      </tr>
-    </thead>
-    <tbody id="projection-rows">
-      <!-- Populated by JS -->
-    </tbody>
-  </table>
-
-  <div class="card" style="margin-top: 1rem; border: 2px solid #7dd3fc;">
-    <h3 style="color: #7dd3fc;">Monthly Profit Target: $<input type="number" class="editable" id="monthly-target" value="4000" step="500" style="width:90px"></h3>
-    <p>Projected Month 12 profit: <strong class="calculated" id="month12-profit">$0</strong></p>
-    <p>Gap to monthly target: <strong class="calculated" id="gap-to-target" style="color: #f87171;">$0</strong></p>
-  </div>
-
   <!-- Three Scenarios -->
   <h2 id="scenarios-section">Scenarios to Hit $4,000/month</h2>
   <div class="grid" style="grid-template-columns: repeat(3, 1fr); gap: 1.5rem;">
@@ -752,27 +799,82 @@
     </table>
   </div>
 
-  <div class="card" style="margin-top: 2rem;">
-    <h3>Unit Economics Summary</h3>
-    <div class="grid" style="grid-template-columns: repeat(4, 1fr);">
-      <div class="stat">
-        <div class="stat-value" id="ltv-display">$294</div>
-        <div class="stat-label">Est. LTV (6mo avg)</div>
+    </div><!-- end main-content -->
+
+    <!-- Sticky Sidebar with Projections -->
+    <div class="sticky-sidebar">
+      <!-- Target Box -->
+      <div class="target-box">
+        <div class="target-label">Target: $<input type="number" class="editable" id="monthly-target" value="4000" step="500" style="width:60px; font-size: 0.75rem;">/mo</div>
+        <div class="target-value calculated" id="month12-profit">$0</div>
+        <div class="target-label">Month 12 Profit</div>
+        <div class="target-gap"><span class="calculated" id="gap-to-target" style="color: #f87171;">$0</span> to target</div>
       </div>
-      <div class="stat">
-        <div class="stat-value" id="cac-display">$0</div>
-        <div class="stat-label">CAC (organic)</div>
+
+      <!-- Unit Economics -->
+      <div class="sidebar-stat">
+        <div class="stat">
+          <div class="stat-value" id="ltv-display">$294</div>
+          <div class="stat-label">LTV</div>
+        </div>
+        <div class="stat">
+          <div class="stat-value" id="arpu-display">$59</div>
+          <div class="stat-label">ARPU</div>
+        </div>
+        <div class="stat">
+          <div class="stat-value" id="margin-display">75%</div>
+          <div class="stat-label">Margin</div>
+        </div>
+        <div class="stat">
+          <div class="stat-value" id="year1-profit-display">$5,000</div>
+          <div class="stat-label">Year 1</div>
+        </div>
       </div>
-      <div class="stat">
-        <div class="stat-value" id="arpu-display">$59</div>
-        <div class="stat-label">ARPU (all paid)</div>
+
+      <!-- Assumptions -->
+      <div class="sidebar-card">
+        <h3>Assumptions</h3>
+        <div class="sidebar-assumptions">
+          <p>Trials/mo: <input type="number" class="editable" id="proj-signups" value="25" step="5"> | Conv: <input type="number" class="editable" id="proj-paid-conversion" value="20" step="1">%</p>
+          <p>Tier mix: <input type="number" class="editable" id="proj-standard-pct" value="50" style="width:35px">/<input type="number" class="editable" id="proj-pro-pct" value="35" style="width:35px">/<input type="number" class="editable" id="proj-advanced-pct" value="15" style="width:35px">%</p>
+          <p>Credit buyers: <input type="number" class="editable" id="proj-credit-buyers-pct" value="40" step="5">% @ $<input type="number" class="editable" id="proj-credit-purchase" value="30" step="5"></p>
+          <p>Churn: <input type="number" class="editable" id="proj-churn" value="5" step="1">% | Fees: <input type="number" class="editable" id="proj-payment-fee" value="3" step="0.5">%</p>
+        </div>
       </div>
-      <div class="stat">
-        <div class="stat-value" id="margin-display">75%</div>
-        <div class="stat-label">Gross Margin</div>
+
+      <!-- Projection Table -->
+      <div class="sidebar-card">
+        <h3 id="projections">Revenue Projections</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Mo</th>
+              <th class="number">Std</th>
+              <th class="number">Pro</th>
+              <th class="number">Adv</th>
+              <th class="number">Profit</th>
+            </tr>
+          </thead>
+          <tbody id="projection-rows">
+            <!-- Populated by JS -->
+          </tbody>
+        </table>
       </div>
-    </div>
-  </div>
+
+      <!-- Quick Stats -->
+      <div class="sidebar-card">
+        <h3>Quick Stats</h3>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; font-size: 0.8rem;">
+          <div>Fixed costs:</div>
+          <div class="number"><strong>$<span id="sidebar-fixed-costs" class="calculated">397.50</span></strong></div>
+          <div>Breakeven:</div>
+          <div class="number"><strong><span id="breakeven-display">4 users</span></strong></div>
+          <div>Std price:</div>
+          <div class="number">$<span id="standard-price-display">49</span></div>
+        </div>
+      </div>
+    </div><!-- end sticky-sidebar -->
+  </div><!-- end page-layout -->
 
   <footer style="margin-top: 3rem; padding-top: 2rem; border-top: 1px solid #334155; color: #64748b; text-align: center;">
     Deep Outbound Pricing Calculator v2 | Lead Scraping Core Model | All values update automatically
@@ -804,8 +906,10 @@
       costs.forEach(input => {
         total += parseFloat(input.value) || 0;
       });
-      document.getElementById('total-fixed').textContent = total.toFixed(2);
-      document.getElementById('total-fixed-display').textContent = '$' + total.toFixed(2);
+      const totalFixedEl = document.getElementById('total-fixed');
+      const sidebarFixedEl = document.getElementById('sidebar-fixed-costs');
+      if (totalFixedEl) totalFixedEl.textContent = total.toFixed(2);
+      if (sidebarFixedEl) sidebarFixedEl.textContent = total.toFixed(2);
       return total;
     }
 
@@ -964,12 +1068,7 @@
           <td class="number">${standardUsers}</td>
           <td class="number">${proUsers}</td>
           <td class="number">${advancedUsers}</td>
-          <td class="number">$${Math.round(grossRevenue).toLocaleString()}</td>
-          <td class="number negative">$${Math.round(processingFees).toLocaleString()}</td>
-          <td class="number">$${Math.round(netRevenue).toLocaleString()}</td>
-          <td class="number negative">$${Math.round(variableCosts).toLocaleString()}</td>
           <td class="number ${netProfit >= 0 ? 'positive' : 'negative'}">$${Math.round(netProfit).toLocaleString()}</td>
-          <td class="number ${cumulative >= 0 ? 'positive' : 'negative'}">$${Math.round(cumulative).toLocaleString()}</td>
         `;
         tbody.appendChild(row);
       });
@@ -1047,7 +1146,7 @@
       // Update display values
       const standardPriceDisplay = document.getElementById('standard-price-display');
       if (standardPriceDisplay) {
-        standardPriceDisplay.textContent = '$' + getStandardPrice();
+        standardPriceDisplay.textContent = getStandardPrice();
       }
     }
 
