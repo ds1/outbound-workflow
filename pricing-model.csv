@@ -1,0 +1,69 @@
+Deep Outbound Pricing Model Analysis
+Generated: January 2026
+
+=== FIXED MONTHLY COSTS ===
+Service,Plan,Monthly Cost,Notes
+Canny,Core,$24,Feedback portal with custom domain
+Vercel,Pro,$20,Hosting with team features
+Supabase,Free to Pro,$0-25,Pro at scale
+Spaceship,Domain,$1.50,Annual divided by 12
+Spacemail,Mailboxes,$3,2 mailboxes at $1.50 each
+X.com,Premium+,$16,Verification and API
+SlyBroadcast,Basic,$8,100 msgs included (scales with usage)
+Resend,Pro,$20,50k emails/mo included
+ElevenLabs,Starter,$5,30k chars/mo included
+TOTAL FIXED,,$97.50,Minimum before variable costs
+
+=== VARIABLE COSTS PER ACTION ===
+Action,Your Cost,Credits Charged,User Pays (at $0.01/credit),Your Margin,Margin %
+Send 1 email,$0.001,1,$0.01,$0.009,900%
+AI email generation,$0.02,5,$0.05,$0.03,150%
+AI voicemail script,$0.01,3,$0.03,$0.02,200%
+AI subject lines (5),$0.01,2,$0.02,$0.01,100%
+Voice synthesis (short 500 chars),$0.08,15,$0.15,$0.07,88%
+Voice synthesis (long 1000 chars),$0.17,30,$0.30,$0.13,76%
+Voicemail drop,$0.05,10,$0.10,$0.05,100%
+Lead scraping,$0.00,1,$0.01,$0.01,∞
+AI lead scoring,$0.01,3,$0.03,$0.02,200%
+
+=== CREDIT PACKAGES ===
+Package,Credits,Price,Per Credit,Discount vs Starter
+Starter,500,$5,$0.0100,0%
+Standard,2000,$15,$0.0075,25%
+Pro,5000,$30,$0.0060,40%
+Business,15000,$75,$0.0050,50%
+
+=== SUBSCRIPTION + CREDITS MODEL ===
+Plan,Monthly Fee,Included Credits,Credit Value,Extra Credit Price,Effective Per-Credit
+Free,$0,100 (one-time),$1.00,$0.01,$0.0100
+Starter,$9,1000,$10.00,$0.008,$0.0090
+Pro,$29,4000,$40.00,$0.006,$0.0073
+Business,$79,15000,$150.00,$0.004,$0.0053
+
+=== USER SCENARIOS ===
+Scenario,Emails,AI Gens,Voice Synths,VM Drops,Total Credits,Your Cost,User Pays (Starter pkg)
+Light tester,50,10,2,0,100,$0.35,$1.00
+Active user,200,40,10,20,670,$2.50,$6.70
+Power user,500,100,30,100,2400,$8.00,$24.00
+Heavy user,1000,200,60,200,4900,$16.00,$49.00
+
+=== REVENUE PROJECTIONS - CREDIT PACKAGES ONLY ===
+Month,New Signups,Total Users,Conversion %,Paying Users,Avg Purchase,Monthly Revenue,Fixed Costs,Variable Costs,Net Profit
+1,100,100,20%,20,$15,$300,$98,$60,$142
+2,100,200,20%,40,$15,$600,$98,$120,$382
+3,100,300,20%,60,$15,$900,$98,$180,$622
+6,100,600,20%,120,$15,$1800,$98,$360,$1342
+12,100,1200,20%,240,$15,$3600,$98,$720,$2782
+
+=== REVENUE PROJECTIONS - SUBSCRIPTION MODEL ===
+Month,New Signups,Total Users,Conversion %,Subscribers,Mix (Starter/Pro/Biz),Monthly Revenue,Fixed Costs,Variable Costs,Net Profit
+1,100,100,15%,15,10/4/1,$226,$98,$45,$83
+2,100,200,15%,30,20/8/2,$452,$98,$90,$264
+3,100,300,15%,45,30/12/3,$678,$98,$135,$445
+6,100,600,15%,90,60/24/6,$1356,$98,$270,$988
+12,100,1200,15%,180,120/48/12,$2712,$98,$540,$2074
+
+=== BREAKEVEN ANALYSIS ===
+Model,Fixed Costs,Breakeven Users,At Price Point
+Credit Packages,$98,7 users,$15/mo avg purchase
+Subscriptions,$98,5 users,$20/mo avg subscription

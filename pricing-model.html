@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Deep Outbound - Pricing Model Analysis</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #0a1525;
+      color: #e2e8f0;
+      padding: 2rem;
+      line-height: 1.6;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+    h1 { color: #7dd3fc; margin-bottom: 0.5rem; }
+    h2 { color: #7dd3fc; margin-top: 2.5rem; border-bottom: 1px solid #334155; padding-bottom: 0.5rem; }
+    h3 { color: #94a3b8; margin-top: 1.5rem; }
+    .subtitle { color: #64748b; margin-bottom: 2rem; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1rem 0 2rem;
+      background: #1e293b;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    th, td {
+      padding: 0.75rem 1rem;
+      text-align: left;
+      border-bottom: 1px solid #334155;
+    }
+    th { background: #334155; color: #7dd3fc; font-weight: 600; }
+    tr:hover { background: #263548; }
+    .number { text-align: right; font-family: monospace; }
+    .positive { color: #4ade80; }
+    .negative { color: #f87171; }
+    .highlight { background: #1e3a5f; }
+    .total-row { background: #334155; font-weight: 600; }
+    .card {
+      background: #1e293b;
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin: 1rem 0;
+    }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; }
+    .stat { text-align: center; padding: 1rem; }
+    .stat-value { font-size: 2rem; font-weight: bold; color: #7dd3fc; }
+    .stat-label { color: #94a3b8; font-size: 0.875rem; }
+    .editable {
+      background: #0f172a;
+      border: 1px solid #475569;
+      color: #fbbf24;
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      width: 100px;
+      text-align: right;
+      font-family: monospace;
+    }
+    .editable-sm {
+      width: 70px;
+    }
+    .editable-lg {
+      width: 120px;
+    }
+    .editable:focus {
+      outline: none;
+      border-color: #7dd3fc;
+      box-shadow: 0 0 0 2px rgba(125, 211, 252, 0.2);
+    }
+    .calculated {
+      color: #7dd3fc;
+      font-weight: 600;
+    }
+    .section-nav {
+      position: sticky;
+      top: 0;
+      background: #0a1525;
+      padding: 1rem 0;
+      margin-bottom: 1rem;
+      border-bottom: 1px solid #334155;
+      z-index: 100;
+    }
+    .section-nav a {
+      color: #7dd3fc;
+      text-decoration: none;
+      margin-right: 1.5rem;
+      font-size: 0.875rem;
+    }
+    .section-nav a:hover { text-decoration: underline; }
+    .help-text { font-size: 0.75rem; color: #64748b; margin-top: 0.5rem; }
+    .tier-card {
+      background: #1e293b;
+      border-radius: 12px;
+      padding: 1.5rem;
+      text-align: center;
+      border: 2px solid #334155;
+      transition: border-color 0.2s;
+    }
+    .tier-card:hover { border-color: #7dd3fc; }
+    .tier-card.featured { border-color: #4ade80; background: #1e3a5f; }
+    .tier-name { font-size: 1.25rem; font-weight: 600; color: #7dd3fc; margin-bottom: 0.5rem; }
+    .tier-price { font-size: 2.5rem; font-weight: bold; color: #fff; }
+    .tier-price span { font-size: 1rem; color: #94a3b8; }
+    .tier-features { text-align: left; margin-top: 1rem; }
+    .tier-features li { padding: 0.5rem 0; border-bottom: 1px solid #334155; }
+    .tier-features li:last-child { border-bottom: none; }
+    .check { color: #4ade80; margin-right: 0.5rem; }
+    .x { color: #f87171; margin-right: 0.5rem; }
+    .badge {
+      display: inline-block;
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    .badge-free { background: #1e3a5f; color: #7dd3fc; }
+    .badge-pro { background: #065f46; color: #4ade80; }
+    .badge-credits { background: #78350f; color: #fbbf24; }
+    .value-prop {
+      background: linear-gradient(135deg, #1e3a5f 0%, #0f172a 100%);
+      border: 1px solid #7dd3fc;
+      border-radius: 12px;
+      padding: 2rem;
+      margin: 2rem 0;
+      text-align: center;
+    }
+    .value-prop h3 { color: #7dd3fc; font-size: 1.5rem; margin-bottom: 1rem; }
+    .value-prop p { color: #94a3b8; max-width: 600px; margin: 0 auto; }
+  </style>
+</head>
+<body>
+  <h1>Deep Outbound - Pricing Model v2</h1>
+  <p class="subtitle">Lead Scraping as Core Value | Campaigns as Pro Feature</p>
+
+  <nav class="section-nav">
+    <a href="#value-prop">Value Prop</a>
+    <a href="#tiers">Pricing Tiers</a>
+    <a href="#features">Feature Matrix</a>
+    <a href="#fixed-costs">Fixed Costs</a>
+    <a href="#variable-costs">Variable Costs</a>
+    <a href="#credit-pricing">Credit Pricing</a>
+    <a href="#projections">Projections</a>
+  </nav>
+
+  <!-- Summary Stats -->
+  <div class="grid">
+    <div class="card stat">
+      <div class="stat-value" id="total-fixed-display">$197.50</div>
+      <div class="stat-label">Fixed Monthly Costs</div>
+    </div>
+    <div class="card stat">
+      <div class="stat-value" id="breakeven-display">4 users</div>
+      <div class="stat-label">Breakeven Pro Users</div>
+    </div>
+    <div class="card stat">
+      <div class="stat-value" id="year1-profit-display">$5,000</div>
+      <div class="stat-label">Year 1 Profit (est)</div>
+    </div>
+    <div class="card stat">
+      <div class="stat-value">$49</div>
+      <div class="stat-label">Pro Monthly Price</div>
+    </div>
+  </div>
+
+  <!-- Value Proposition -->
+  <div class="value-prop" id="value-prop">
+    <h3>Core Value: AI-Powered Lead Discovery</h3>
+    <p>Domain investors spend hours manually searching for potential buyers. Deep Outbound's AI finds qualified leads in minutes - companies using inferior domains, SEO bidders, emerging startups, and market leaders who need your domains.</p>
+    <p style="margin-top: 1rem; color: #7dd3fc; font-weight: 600;">Lead scraping = Free (with limits) | Campaigns = Pro ($49/mo)</p>
+  </div>
+
+  <!-- Pricing Tiers -->
+  <h2 id="tiers">Pricing Tiers</h2>
+  <div class="grid" style="grid-template-columns: repeat(3, 1fr); gap: 1.5rem; margin: 2rem 0;">
+    <div class="tier-card">
+      <div class="tier-name">Free</div>
+      <div class="tier-price">$0<span>/month</span></div>
+      <p style="color: #94a3b8; font-size: 0.875rem;">Get started finding leads</p>
+      <ul class="tier-features" style="list-style: none; padding: 0;">
+        <li><span class="check">&#10003;</span> <input type="number" class="editable tier-limit" id="free-leads-scraped" value="50" style="width:60px"> leads/month</li>
+        <li><span class="check">&#10003;</span> <input type="number" class="editable tier-limit" id="free-ai-gens" value="10" style="width:60px"> AI gens/month</li>
+        <li><span class="check">&#10003;</span> <input type="number" class="editable tier-limit" id="free-domains" value="5" style="width:60px"> domains</li>
+        <li><span class="check">&#10003;</span> Unlimited manual leads</li>
+        <li><span class="check">&#10003;</span> CSV import/export</li>
+        <li><span class="check">&#10003;</span> Basic analytics (7 days)</li>
+        <li><span class="x">&#10007;</span> <span style="color:#64748b">Campaigns</span></li>
+        <li><span class="x">&#10007;</span> <span style="color:#64748b">Email sending</span></li>
+        <li><span class="x">&#10007;</span> <span style="color:#64748b">Voicemail drops</span></li>
+      </ul>
+    </div>
+    <div class="tier-card featured">
+      <div style="position: relative;">
+        <span class="badge badge-pro" style="position: absolute; top: -0.5rem; right: -0.5rem;">Popular</span>
+      </div>
+      <div class="tier-name">Pro</div>
+      <div class="tier-price">$<input type="number" class="editable" id="pro-price" value="49" style="width:90px; font-size: 2rem; text-align: center;"><span>/month</span></div>
+      <p style="color: #94a3b8; font-size: 0.875rem;">Start outbound campaigns</p>
+      <ul class="tier-features" style="list-style: none; padding: 0;">
+        <li><span class="check">&#10003;</span> <input type="number" class="editable tier-limit" id="pro-leads-scraped" value="500" style="width:60px"> leads/month</li>
+        <li><span class="check">&#10003;</span> <input type="number" class="editable tier-limit" id="pro-ai-gens" value="200" style="width:60px"> AI gens/month</li>
+        <li><span class="check">&#10003;</span> Unlimited domains</li>
+        <li><span class="check">&#10003;</span> Full analytics (90 days)</li>
+        <li><span class="check">&#10003;</span> <input type="number" class="editable tier-limit" id="pro-campaigns" value="5" style="width:60px"> concurrent campaigns</li>
+        <li><span class="check">&#10003;</span> Email sending (credits)</li>
+        <li><span class="check">&#10003;</span> Voicemail drops (credits)</li>
+        <li><span class="check">&#10003;</span> BYOK option</li>
+        <li><span class="x">&#10007;</span> <span style="color:#64748b">Priority support</span></li>
+      </ul>
+    </div>
+    <div class="tier-card" style="border-color: #7dd3fc;">
+      <div class="tier-name">Advanced</div>
+      <div class="tier-price">$<input type="number" class="editable" id="advanced-price" value="99" style="width:90px; font-size: 2rem; text-align: center;"><span>/month</span></div>
+      <p style="color: #94a3b8; font-size: 0.875rem;">Scale your outreach</p>
+      <ul class="tier-features" style="list-style: none; padding: 0;">
+        <li><span class="check">&#10003;</span> <input type="number" class="editable tier-limit" id="advanced-leads-scraped" value="2000" style="width:60px"> leads/month</li>
+        <li><span class="check">&#10003;</span> <input type="number" class="editable tier-limit" id="advanced-ai-gens" value="1000" style="width:60px"> AI gens/month</li>
+        <li><span class="check">&#10003;</span> Unlimited domains</li>
+        <li><span class="check">&#10003;</span> Full analytics (90 days)</li>
+        <li><span class="check">&#10003;</span> <strong>Unlimited</strong> campaigns</li>
+        <li><span class="check">&#10003;</span> Email sending (credits)</li>
+        <li><span class="check">&#10003;</span> Voicemail drops (credits)</li>
+        <li><span class="check">&#10003;</span> BYOK option</li>
+        <li><span class="check">&#10003;</span> <strong>Priority support</strong></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Credit Add-Ons (Pro & Advanced)</h3>
+    <p style="color: #94a3b8;">Subscriptions include base usage. Buy credits for additional email sends and voicemail drops.</p>
+    <table style="margin-top: 1rem;">
+      <tr>
+        <td>Included with Pro</td>
+        <td class="number"><input type="number" class="editable" id="pro-included-emails" value="500" style="width:70px"> emails + <input type="number" class="editable" id="pro-included-vms" value="50" style="width:60px"> voicemails</td>
+        <td class="number">~$<span id="pro-included-value">55</span> value</td>
+      </tr>
+      <tr>
+        <td>Included with Advanced</td>
+        <td class="number"><input type="number" class="editable" id="advanced-included-emails" value="2000" style="width:70px"> emails + <input type="number" class="editable" id="advanced-included-vms" value="200" style="width:60px"> voicemails</td>
+        <td class="number">~$<span id="advanced-included-value">220</span> value</td>
+      </tr>
+      <tr>
+        <td>Extra credits</td>
+        <td class="number">$<span id="credit-display">0.10</span>/credit</td>
+        <td class="number">1 email = 1 credit, 1 VM drop = 10 credits</td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- Feature Matrix -->
+  <h2 id="features">Feature Matrix</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Feature</th>
+        <th>Free</th>
+        <th>Pro ($49)</th>
+        <th>Advanced ($99)</th>
+        <th>Notes</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="highlight">
+        <td><strong>Lead Discovery</strong></td>
+        <td><span class="badge badge-free">50/mo</span></td>
+        <td><span class="badge badge-pro">500/mo</span></td>
+        <td><span class="badge badge-pro">2,000/mo</span></td>
+        <td>AI-powered lead scraping</td>
+      </tr>
+      <tr>
+        <td>AI Generations</td>
+        <td><span class="badge badge-free">10/mo</span></td>
+        <td><span class="badge badge-pro">200/mo</span></td>
+        <td><span class="badge badge-pro">1,000/mo</span></td>
+        <td>Email, voicemail, subject lines</td>
+      </tr>
+      <tr>
+        <td>Domain Portfolio</td>
+        <td>5 domains</td>
+        <td>Unlimited</td>
+        <td>Unlimited</td>
+        <td>Manage domains for sale</td>
+      </tr>
+      <tr>
+        <td>Analytics</td>
+        <td>7 days</td>
+        <td>90 days</td>
+        <td>90 days</td>
+        <td>Track engagement</td>
+      </tr>
+      <tr class="highlight">
+        <td><strong>Campaigns</strong></td>
+        <td><span class="x">&#10007;</span></td>
+        <td><span class="badge badge-pro">5 concurrent</span></td>
+        <td><span class="badge badge-pro">Unlimited</span></td>
+        <td>Multi-step sequences</td>
+      </tr>
+      <tr class="highlight">
+        <td><strong>Email Sending</strong></td>
+        <td><span class="x">&#10007;</span></td>
+        <td><span class="badge badge-credits">500 + credits</span></td>
+        <td><span class="badge badge-credits">2,000 + credits</span></td>
+        <td>1 credit/email</td>
+      </tr>
+      <tr class="highlight">
+        <td><strong>Voicemail Drops</strong></td>
+        <td><span class="x">&#10007;</span></td>
+        <td><span class="badge badge-credits">50 + credits</span></td>
+        <td><span class="badge badge-credits">200 + credits</span></td>
+        <td>10 credits/drop</td>
+      </tr>
+      <tr>
+        <td>Voice Synthesis</td>
+        <td><span class="x">&#10007;</span></td>
+        <td><span class="badge badge-credits">Credits</span></td>
+        <td><span class="badge badge-credits">Credits</span></td>
+        <td>15-30 credits per audio</td>
+      </tr>
+      <tr>
+        <td>BYOK</td>
+        <td><span class="x">&#10007;</span></td>
+        <td><span class="check">&#10003;</span></td>
+        <td><span class="check">&#10003;</span></td>
+        <td>Use your own API keys</td>
+      </tr>
+      <tr>
+        <td>Escalation Rules</td>
+        <td>1</td>
+        <td>Unlimited</td>
+        <td>Unlimited</td>
+        <td>Automated workflows</td>
+      </tr>
+      <tr>
+        <td>Priority Support</td>
+        <td><span class="x">&#10007;</span></td>
+        <td><span class="x">&#10007;</span></td>
+        <td><span class="check">&#10003;</span></td>
+        <td>Email + chat</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- Fixed Costs -->
+  <h2 id="fixed-costs">Fixed Monthly Costs</h2>
+  <p class="help-text">Edit the yellow cost values to recalculate all dependent fields. All values shown as monthly equivalent.</p>
+  <table>
+    <thead>
+      <tr>
+        <th>Service</th>
+        <th>Plan</th>
+        <th class="number">Monthly Cost</th>
+        <th>Billing</th>
+        <th>Notes</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Canny</td>
+        <td>Core</td>
+        <td class="number">$<input type="number" class="editable fixed-cost" id="cost-canny" value="24" step="0.01"></td>
+        <td>Monthly</td>
+        <td>$24/mo monthly, or $19/mo annual ($228/yr)</td>
+      </tr>
+      <tr>
+        <td>Vercel</td>
+        <td>Pro</td>
+        <td class="number">$<input type="number" class="editable fixed-cost" id="cost-vercel" value="20" step="0.01"></td>
+        <td>Monthly</td>
+        <td>$20/mo (no annual discount)</td>
+      </tr>
+      <tr>
+        <td>Supabase</td>
+        <td>Pro</td>
+        <td class="number">$<input type="number" class="editable fixed-cost" id="cost-supabase" value="0" step="0.01"></td>
+        <td>Monthly</td>
+        <td>Free tier now; Pro $25/mo when needed</td>
+      </tr>
+      <tr>
+        <td>Spaceship</td>
+        <td>Domain</td>
+        <td class="number">$<input type="number" class="editable fixed-cost" id="cost-domain" value="1.50" step="0.01"></td>
+        <td>Annual</td>
+        <td>~$18/yr / 12 = $1.50/mo</td>
+      </tr>
+      <tr>
+        <td>Spacemail</td>
+        <td>Mailboxes</td>
+        <td class="number">$<input type="number" class="editable fixed-cost" id="cost-spacemail" value="3" step="0.01"></td>
+        <td>Annual</td>
+        <td>~$18/yr per mailbox x 2 / 12</td>
+      </tr>
+      <tr>
+        <td>X.com</td>
+        <td>Premium+</td>
+        <td class="number">$<input type="number" class="editable fixed-cost" id="cost-x" value="16" step="0.01"></td>
+        <td>Monthly</td>
+        <td>$16/mo monthly, or $14/mo annual ($168/yr)</td>
+      </tr>
+      <tr>
+        <td>SlyBroadcast</td>
+        <td>Basic</td>
+        <td class="number">$<input type="number" class="editable fixed-cost" id="cost-slybroadcast" value="8" step="0.01"></td>
+        <td>Monthly</td>
+        <td>$8/mo for 100 msgs (scales with usage)</td>
+      </tr>
+      <tr>
+        <td>Resend</td>
+        <td>Pro</td>
+        <td class="number">$<input type="number" class="editable fixed-cost" id="cost-resend" value="20" step="0.01"></td>
+        <td>Monthly</td>
+        <td>$20/mo includes 50k emails</td>
+      </tr>
+      <tr>
+        <td>ElevenLabs</td>
+        <td>Starter</td>
+        <td class="number">$<input type="number" class="editable fixed-cost" id="cost-elevenlabs" value="5" step="0.01"></td>
+        <td>Monthly</td>
+        <td>$5/mo monthly, or $4.17/mo annual ($50/yr)</td>
+      </tr>
+      <tr>
+        <td>Claude Code</td>
+        <td>Max</td>
+        <td class="number">$<input type="number" class="editable fixed-cost" id="cost-claude-code" value="100" step="1"></td>
+        <td>Monthly</td>
+        <td>Pro $20/mo, Max $100/mo, Max 5x $200/mo</td>
+      </tr>
+      <tr class="total-row">
+        <td colspan="2"><strong>TOTAL FIXED</strong></td>
+        <td class="number"><strong>$<span id="total-fixed" class="calculated">197.50</span></strong></td>
+        <td></td>
+        <td></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- Variable Costs -->
+  <h2 id="variable-costs">Variable Costs Per Action</h2>
+  <p class="help-text">Edit your costs and credit charges to see margin calculations</p>
+  <table>
+    <thead>
+      <tr>
+        <th>Action</th>
+        <th class="number">Your Cost</th>
+        <th class="number">Credits</th>
+        <th class="number">User Pays</th>
+        <th class="number">Margin</th>
+        <th class="number">Margin %</th>
+        <th>Tier</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="highlight">
+        <td><strong>Lead scraping</strong></td>
+        <td class="number">$<input type="number" class="editable var-cost" data-action="scrape" id="cost-scrape" value="0" step="0.001"></td>
+        <td class="number"><input type="number" class="editable var-credits" data-action="scrape" id="credits-scrape" value="0" step="1"></td>
+        <td class="number">$<span class="calculated user-pays" data-action="scrape">0.00</span></td>
+        <td class="number positive">$<span class="calculated margin-amt" data-action="scrape">0.00</span></td>
+        <td class="number positive"><span class="calculated margin-pct" data-action="scrape">-</span></td>
+        <td><span class="badge badge-free">Free</span></td>
+      </tr>
+      <tr>
+        <td>AI generation</td>
+        <td class="number">$<input type="number" class="editable var-cost" data-action="ai-gen" id="cost-ai-gen" value="0.02" step="0.001"></td>
+        <td class="number"><input type="number" class="editable var-credits" data-action="ai-gen" id="credits-ai-gen" value="0" step="1"></td>
+        <td class="number">$<span class="calculated user-pays" data-action="ai-gen">0.00</span></td>
+        <td class="number">$<span class="calculated margin-amt" data-action="ai-gen">-0.02</span></td>
+        <td class="number"><span class="calculated margin-pct" data-action="ai-gen">-</span></td>
+        <td><span class="badge badge-free">Free (limited)</span></td>
+      </tr>
+      <tr>
+        <td>Send 1 email</td>
+        <td class="number">$<input type="number" class="editable var-cost" data-action="email" id="cost-email" value="0.001" step="0.001"></td>
+        <td class="number"><input type="number" class="editable var-credits" data-action="email" id="credits-email" value="1" step="1"></td>
+        <td class="number">$<span class="calculated user-pays" data-action="email">0.01</span></td>
+        <td class="number positive">$<span class="calculated margin-amt" data-action="email">0.009</span></td>
+        <td class="number positive"><span class="calculated margin-pct" data-action="email">900</span>%</td>
+        <td><span class="badge badge-pro">Pro</span></td>
+      </tr>
+      <tr>
+        <td>Voicemail drop</td>
+        <td class="number">$<input type="number" class="editable var-cost" data-action="vm-drop" id="cost-vm-drop" value="0.05" step="0.001"></td>
+        <td class="number"><input type="number" class="editable var-credits" data-action="vm-drop" id="credits-vm-drop" value="10" step="1"></td>
+        <td class="number">$<span class="calculated user-pays" data-action="vm-drop">0.10</span></td>
+        <td class="number positive">$<span class="calculated margin-amt" data-action="vm-drop">0.05</span></td>
+        <td class="number positive"><span class="calculated margin-pct" data-action="vm-drop">100</span>%</td>
+        <td><span class="badge badge-pro">Pro</span></td>
+      </tr>
+      <tr>
+        <td>Voice synthesis (short)</td>
+        <td class="number">$<input type="number" class="editable var-cost" data-action="voice-short" id="cost-voice-short" value="0.08" step="0.001"></td>
+        <td class="number"><input type="number" class="editable var-credits" data-action="voice-short" id="credits-voice-short" value="15" step="1"></td>
+        <td class="number">$<span class="calculated user-pays" data-action="voice-short">0.15</span></td>
+        <td class="number positive">$<span class="calculated margin-amt" data-action="voice-short">0.07</span></td>
+        <td class="number positive"><span class="calculated margin-pct" data-action="voice-short">88</span>%</td>
+        <td><span class="badge badge-pro">Pro</span></td>
+      </tr>
+      <tr>
+        <td>Voice synthesis (long)</td>
+        <td class="number">$<input type="number" class="editable var-cost" data-action="voice-long" id="cost-voice-long" value="0.17" step="0.001"></td>
+        <td class="number"><input type="number" class="editable var-credits" data-action="voice-long" id="credits-voice-long" value="30" step="1"></td>
+        <td class="number">$<span class="calculated user-pays" data-action="voice-long">0.30</span></td>
+        <td class="number positive">$<span class="calculated margin-amt" data-action="voice-long">0.13</span></td>
+        <td class="number positive"><span class="calculated margin-pct" data-action="voice-long">76</span>%</td>
+        <td><span class="badge badge-pro">Pro</span></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- Credit Pricing -->
+  <h2 id="credit-pricing">Credit Pricing (Pro & Advanced Add-Ons)</h2>
+  <p class="help-text">Subscribers can buy additional credits. 1 credit = $<input type="number" class="editable" id="credit-value" value="0.10" step="0.01" style="width:70px"></p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Package</th>
+        <th class="number">Credits</th>
+        <th class="number">Price</th>
+        <th class="number">Per Credit</th>
+        <th class="number">Discount</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Small Top-Up</td>
+        <td class="number"><input type="number" class="editable pkg-credits" data-pkg="small" value="100" step="10"></td>
+        <td class="number">$<input type="number" class="editable pkg-price" data-pkg="small" value="10" step="1"></td>
+        <td class="number">$<span class="calculated pkg-per-credit" data-pkg="small">0.100</span></td>
+        <td class="number"><span class="calculated pkg-discount" data-pkg="small">0</span>%</td>
+      </tr>
+      <tr>
+        <td>Standard</td>
+        <td class="number"><input type="number" class="editable pkg-credits" data-pkg="standard" value="500" step="50"></td>
+        <td class="number">$<input type="number" class="editable pkg-price" data-pkg="standard" value="40" step="1"></td>
+        <td class="number">$<span class="calculated pkg-per-credit" data-pkg="standard">0.080</span></td>
+        <td class="number positive"><span class="calculated pkg-discount" data-pkg="standard">20</span>%</td>
+      </tr>
+      <tr>
+        <td>Bulk</td>
+        <td class="number"><input type="number" class="editable pkg-credits" data-pkg="bulk" value="1000" step="100"></td>
+        <td class="number">$<input type="number" class="editable pkg-price" data-pkg="bulk" value="70" step="1"></td>
+        <td class="number">$<span class="calculated pkg-per-credit" data-pkg="bulk">0.070</span></td>
+        <td class="number positive"><span class="calculated pkg-discount" data-pkg="bulk">30</span>%</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- Revenue Projections -->
+  <h2 id="projections">Revenue Projections</h2>
+  <div class="card">
+    <h3>Assumptions (edit these)</h3>
+    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem;">
+      <div>
+        <p>Monthly signups: <input type="number" class="editable" id="proj-signups" value="100" step="10" style="width:80px"></p>
+        <p>Free → Pro conversion: <input type="number" class="editable" id="proj-pro-conversion" value="8" step="1" style="width:60px">%</p>
+        <p>Pro → Advanced upgrade: <input type="number" class="editable" id="proj-advanced-conversion" value="20" step="1" style="width:60px">%</p>
+      </div>
+      <div>
+        <p>Pro users buying credits: <input type="number" class="editable" id="proj-credit-buyers-pct" value="30" step="5" style="width:60px">%</p>
+        <p>Avg credit purchase: $<input type="number" class="editable" id="proj-credit-purchase" value="20" step="5" style="width:70px"></p>
+        <p>Monthly churn: <input type="number" class="editable" id="proj-churn" value="5" step="1" style="width:60px">%</p>
+      </div>
+    </div>
+    <p class="help-text">Domain investing is high-value (6-7 figure sales possible). Conservative 8% free→Pro conversion.</p>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Month</th>
+        <th class="number">Free</th>
+        <th class="number">Pro</th>
+        <th class="number">Advanced</th>
+        <th class="number">Sub Rev</th>
+        <th class="number">Credit Rev</th>
+        <th class="number">Total Rev</th>
+        <th class="number">Fixed</th>
+        <th class="number">Profit</th>
+        <th class="number">Cumulative</th>
+      </tr>
+    </thead>
+    <tbody id="projection-rows">
+      <!-- Populated by JS -->
+    </tbody>
+  </table>
+
+  <div class="card" style="margin-top: 2rem;">
+    <h3>Unit Economics Summary</h3>
+    <div class="grid" style="grid-template-columns: repeat(4, 1fr);">
+      <div class="stat">
+        <div class="stat-value" id="ltv-display">$294</div>
+        <div class="stat-label">Est. LTV (6mo avg)</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value" id="cac-display">$0</div>
+        <div class="stat-label">CAC (organic)</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value" id="arpu-display">$59</div>
+        <div class="stat-label">ARPU (Pro users)</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value" id="margin-display">75%</div>
+        <div class="stat-label">Gross Margin</div>
+      </div>
+    </div>
+  </div>
+
+  <footer style="margin-top: 3rem; padding-top: 2rem; border-top: 1px solid #334155; color: #64748b; text-align: center;">
+    Deep Outbound Pricing Calculator v2 | Lead Scraping Core Model | All values update automatically
+  </footer>
+
+  <script>
+    // Get credit value
+    function getCreditValue() {
+      return parseFloat(document.getElementById('credit-value').value) || 0.10;
+    }
+
+    // Get tier prices
+    function getProPrice() {
+      return parseFloat(document.getElementById('pro-price').value) || 49;
+    }
+
+    function getAdvancedPrice() {
+      return parseFloat(document.getElementById('advanced-price').value) || 99;
+    }
+
+    // Calculate total fixed costs
+    function calculateFixedCosts() {
+      const costs = document.querySelectorAll('.fixed-cost');
+      let total = 0;
+      costs.forEach(input => {
+        total += parseFloat(input.value) || 0;
+      });
+      document.getElementById('total-fixed').textContent = total.toFixed(2);
+      document.getElementById('total-fixed-display').textContent = '$' + total.toFixed(2);
+      return total;
+    }
+
+    // Calculate variable cost margins
+    function calculateVariableCosts() {
+      const creditValue = getCreditValue();
+      const actions = ['scrape', 'ai-gen', 'email', 'vm-drop', 'voice-short', 'voice-long'];
+
+      actions.forEach(action => {
+        const costEl = document.querySelector(`.var-cost[data-action="${action}"]`);
+        const creditsEl = document.querySelector(`.var-credits[data-action="${action}"]`);
+        if (!costEl || !creditsEl) return;
+
+        const cost = parseFloat(costEl.value) || 0;
+        const credits = parseInt(creditsEl.value) || 0;
+        const userPays = credits * creditValue;
+        const margin = userPays - cost;
+        const marginPct = cost > 0 ? ((margin / cost) * 100) : (credits > 0 ? Infinity : 0);
+
+        const userPaysEl = document.querySelector(`.user-pays[data-action="${action}"]`);
+        const marginAmtEl = document.querySelector(`.margin-amt[data-action="${action}"]`);
+        const marginPctEl = document.querySelector(`.margin-pct[data-action="${action}"]`);
+
+        if (userPaysEl) userPaysEl.textContent = userPays.toFixed(2);
+        if (marginAmtEl) marginAmtEl.textContent = margin.toFixed(3);
+        if (marginPctEl) {
+          if (credits === 0) {
+            marginPctEl.textContent = '-';
+          } else {
+            marginPctEl.textContent = marginPct === Infinity ? 'Infinite' : Math.round(marginPct);
+          }
+        }
+      });
+
+      // Update credit display in the card
+      const creditDisplay = document.getElementById('credit-display');
+      if (creditDisplay) {
+        creditDisplay.textContent = getCreditValue().toFixed(2);
+      }
+
+      // Update included value calculations
+      const creditVal = getCreditValue();
+      const proEmails = parseInt(document.getElementById('pro-included-emails')?.value) || 500;
+      const proVMs = parseInt(document.getElementById('pro-included-vms')?.value) || 50;
+      const advEmails = parseInt(document.getElementById('advanced-included-emails')?.value) || 2000;
+      const advVMs = parseInt(document.getElementById('advanced-included-vms')?.value) || 200;
+
+      const proValue = (proEmails * 1 + proVMs * 10) * creditVal;
+      const advValue = (advEmails * 1 + advVMs * 10) * creditVal;
+
+      const proValueEl = document.getElementById('pro-included-value');
+      const advValueEl = document.getElementById('advanced-included-value');
+      if (proValueEl) proValueEl.textContent = Math.round(proValue);
+      if (advValueEl) advValueEl.textContent = Math.round(advValue);
+    }
+
+    // Calculate package pricing
+    function calculatePackages() {
+      const packages = ['small', 'standard', 'bulk'];
+      const smallCredits = parseInt(document.querySelector('.pkg-credits[data-pkg="small"]').value) || 100;
+      const smallPrice = parseFloat(document.querySelector('.pkg-price[data-pkg="small"]').value) || 10;
+      const smallPerCredit = smallCredits > 0 ? smallPrice / smallCredits : 0.10;
+
+      packages.forEach(pkg => {
+        const credits = parseInt(document.querySelector(`.pkg-credits[data-pkg="${pkg}"]`).value) || 0;
+        const price = parseFloat(document.querySelector(`.pkg-price[data-pkg="${pkg}"]`).value) || 0;
+        const perCredit = credits > 0 ? price / credits : 0;
+        const discount = smallPerCredit > 0 ? ((1 - (perCredit / smallPerCredit)) * 100) : 0;
+
+        document.querySelector(`.pkg-per-credit[data-pkg="${pkg}"]`).textContent = perCredit.toFixed(3);
+        document.querySelector(`.pkg-discount[data-pkg="${pkg}"]`).textContent = Math.round(Math.max(0, discount));
+      });
+    }
+
+    // Calculate projections
+    function calculateProjections() {
+      const fixedCosts = calculateFixedCosts();
+      const proPrice = getProPrice();
+      const advancedPrice = getAdvancedPrice();
+
+      const signups = parseInt(document.getElementById('proj-signups').value) || 100;
+      const proConversion = (parseFloat(document.getElementById('proj-pro-conversion').value) || 8) / 100;
+      const advancedConversion = (parseFloat(document.getElementById('proj-advanced-conversion').value) || 20) / 100;
+      const creditBuyersPct = (parseFloat(document.getElementById('proj-credit-buyers-pct').value) || 30) / 100;
+      const avgCreditPurchase = parseFloat(document.getElementById('proj-credit-purchase').value) || 20;
+      const churnRate = (parseFloat(document.getElementById('proj-churn').value) || 5) / 100;
+
+      const months = [1, 2, 3, 6, 12];
+      const tbody = document.getElementById('projection-rows');
+      tbody.innerHTML = '';
+
+      let cumulative = 0;
+      let proUsers = 0;
+      let advancedUsers = 0;
+
+      months.forEach((month, idx) => {
+        const totalFreeUsers = signups * month;
+
+        // Calculate users with churn
+        const newProFromFree = Math.round(signups * proConversion);
+        const newAdvancedFromPro = Math.round(proUsers * advancedConversion * 0.1); // 10% of upgrade rate per month
+
+        if (idx === 0) {
+          proUsers = newProFromFree;
+          advancedUsers = 0;
+        } else {
+          const prevMonth = months[idx - 1];
+          const monthsElapsed = month - prevMonth;
+
+          // Apply churn
+          proUsers = Math.round(proUsers * Math.pow(1 - churnRate, monthsElapsed));
+          advancedUsers = Math.round(advancedUsers * Math.pow(1 - churnRate * 0.5, monthsElapsed)); // Lower churn for advanced
+
+          // Add new users
+          proUsers += newProFromFree * monthsElapsed;
+
+          // Some Pro users upgrade to Advanced
+          const upgrades = Math.round(proUsers * advancedConversion * 0.05 * monthsElapsed);
+          proUsers -= upgrades;
+          advancedUsers += upgrades;
+        }
+
+        const freeUsers = totalFreeUsers - proUsers - advancedUsers;
+        const totalPaidUsers = proUsers + advancedUsers;
+
+        const subRevenue = (proUsers * proPrice) + (advancedUsers * advancedPrice);
+        const creditRevenue = totalPaidUsers * creditBuyersPct * avgCreditPurchase;
+        const totalRevenue = subRevenue + creditRevenue;
+        const variableCosts = proUsers * 3 + advancedUsers * 8; // Variable costs per user type
+        const netProfit = totalRevenue - fixedCosts - variableCosts;
+        cumulative += netProfit;
+
+        const row = document.createElement('tr');
+        if (month === 12) row.classList.add('highlight');
+        row.innerHTML = `
+          <td>${month}</td>
+          <td class="number">${Math.max(0, freeUsers).toLocaleString()}</td>
+          <td class="number">${proUsers}</td>
+          <td class="number">${advancedUsers}</td>
+          <td class="number">$${Math.round(subRevenue).toLocaleString()}</td>
+          <td class="number">$${Math.round(creditRevenue).toLocaleString()}</td>
+          <td class="number">$${Math.round(totalRevenue).toLocaleString()}</td>
+          <td class="number">$${fixedCosts.toFixed(0)}</td>
+          <td class="number ${netProfit >= 0 ? 'positive' : 'negative'}">$${Math.round(netProfit).toLocaleString()}</td>
+          <td class="number ${cumulative >= 0 ? 'positive' : 'negative'}">$${Math.round(cumulative).toLocaleString()}</td>
+        `;
+        tbody.appendChild(row);
+      });
+
+      // Update summary stats
+      const avgPrice = (proPrice + advancedPrice) / 2;
+      const breakeven = Math.ceil(fixedCosts / avgPrice);
+      document.getElementById('breakeven-display').textContent = breakeven + ' users';
+      document.getElementById('year1-profit-display').textContent = '$' + Math.round(cumulative).toLocaleString();
+
+      // Unit economics (blended)
+      const totalPaid = proUsers + advancedUsers;
+      const blendedPrice = totalPaid > 0 ? ((proUsers * proPrice) + (advancedUsers * advancedPrice)) / totalPaid : proPrice;
+      const arpu = blendedPrice + (avgCreditPurchase * creditBuyersPct);
+      const ltv = arpu * (1 / churnRate); // LTV = ARPU / churn
+      const margin = ((blendedPrice - 5) / blendedPrice * 100);
+      document.getElementById('arpu-display').textContent = '$' + Math.round(arpu);
+      document.getElementById('ltv-display').textContent = '$' + Math.round(Math.min(ltv, 2000)); // Cap display at reasonable LTV
+      document.getElementById('margin-display').textContent = Math.round(margin) + '%';
+    }
+
+    // Recalculate everything
+    function recalculateAll() {
+      calculateFixedCosts();
+      calculateVariableCosts();
+      calculatePackages();
+      calculateProjections();
+    }
+
+    // Add event listeners to all editable inputs
+    document.querySelectorAll('.editable').forEach(input => {
+      input.addEventListener('input', recalculateAll);
+    });
+
+    // Initial calculation
+    recalculateAll();
+  </script>
+</body>
+</html>
