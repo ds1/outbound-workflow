@@ -636,7 +636,8 @@
 
   <!-- Credit Pricing -->
   <h2 id="credit-pricing">Credit Pricing (Pro & Advanced Add-Ons)</h2>
-  <p class="help-text">Subscribers can buy additional credits. 1 credit = $<input type="number" class="editable" id="credit-value" value="0.10" step="0.01" style="width:70px"></p>
+  <p class="help-text">Base credit price: $<input type="number" class="editable" id="credit-value" value="0.10" step="0.01" style="width:70px">/credit
+    <label style="margin-left: 1rem;"><input type="checkbox" id="auto-scale-packages" checked> Auto-scale package prices</label></p>
 
   <table>
     <thead>
@@ -652,23 +653,23 @@
       <tr>
         <td>Small Top-Up</td>
         <td class="number"><input type="number" class="editable pkg-credits" data-pkg="small" value="100" step="10"></td>
-        <td class="number">$<input type="number" class="editable pkg-price" data-pkg="small" value="10" step="1"></td>
+        <td class="number">$<span class="calculated pkg-price-display" data-pkg="small">10</span></td>
         <td class="number">$<span class="calculated pkg-per-credit" data-pkg="small">0.100</span></td>
-        <td class="number"><span class="calculated pkg-discount" data-pkg="small">0</span>%</td>
+        <td class="number"><input type="number" class="editable pkg-discount-input" data-pkg="small" value="0" step="5" style="width:50px">%</td>
       </tr>
       <tr>
         <td>Standard</td>
         <td class="number"><input type="number" class="editable pkg-credits" data-pkg="standard" value="500" step="50"></td>
-        <td class="number">$<input type="number" class="editable pkg-price" data-pkg="standard" value="40" step="1"></td>
+        <td class="number">$<span class="calculated pkg-price-display" data-pkg="standard">40</span></td>
         <td class="number">$<span class="calculated pkg-per-credit" data-pkg="standard">0.080</span></td>
-        <td class="number positive"><span class="calculated pkg-discount" data-pkg="standard">20</span>%</td>
+        <td class="number positive"><input type="number" class="editable pkg-discount-input" data-pkg="standard" value="20" step="5" style="width:50px">%</td>
       </tr>
       <tr>
         <td>Bulk</td>
         <td class="number"><input type="number" class="editable pkg-credits" data-pkg="bulk" value="1000" step="100"></td>
-        <td class="number">$<input type="number" class="editable pkg-price" data-pkg="bulk" value="70" step="1"></td>
+        <td class="number">$<span class="calculated pkg-price-display" data-pkg="bulk">70</span></td>
         <td class="number">$<span class="calculated pkg-per-credit" data-pkg="bulk">0.070</span></td>
-        <td class="number positive"><span class="calculated pkg-discount" data-pkg="bulk">30</span>%</td>
+        <td class="number positive"><input type="number" class="editable pkg-discount-input" data-pkg="bulk" value="30" step="5" style="width:50px">%</td>
       </tr>
     </tbody>
   </table>
@@ -837,7 +838,7 @@
         <div class="sidebar-assumptions">
           <p>Trials/mo: <input type="number" class="editable" id="proj-signups" value="25" step="5"> | Conv: <input type="number" class="editable" id="proj-paid-conversion" value="20" step="1">%</p>
           <p>Tier mix: <input type="number" class="editable" id="proj-standard-pct" value="50" style="width:35px">/<input type="number" class="editable" id="proj-pro-pct" value="35" style="width:35px">/<input type="number" class="editable" id="proj-advanced-pct" value="15" style="width:35px">%</p>
-          <p>Credit buyers: <input type="number" class="editable" id="proj-credit-buyers-pct" value="40" step="5">% @ $<input type="number" class="editable" id="proj-credit-purchase" value="30" step="5"></p>
+          <p>Credit buyers: <input type="number" class="editable" id="proj-credit-buyers-pct" value="40" step="5">% buy <input type="number" class="editable" id="proj-credits-bought" value="300" step="50"> credits</p>
           <p>Churn: <input type="number" class="editable" id="proj-churn" value="5" step="1">% | Fees: <input type="number" class="editable" id="proj-payment-fee" value="3" step="0.5">%</p>
         </div>
       </div>
@@ -978,13 +979,14 @@
 
       packages.forEach(pkg => {
         const credits = parseInt(document.querySelector(`.pkg-credits[data-pkg="${pkg}"]`).value) || 0;
-        const price = parseFloat(document.querySelector(`.pkg-price[data-pkg="${pkg}"]`).value) || 0;
-        const perCredit = credits > 0 ? price / credits : 0;
-        // Discount is relative to base credit value
-        const discount = baseCreditValue > 0 ? ((1 - (perCredit / baseCreditValue)) * 100) : 0;
+        const discountPct = parseFloat(document.querySelector(`.pkg-discount-input[data-pkg="${pkg}"]`).value) || 0;
 
+        // Calculate price from base credit value and discount
+        const perCredit = baseCreditValue * (1 - discountPct / 100);
+        const price = credits * perCredit;
+
+        document.querySelector(`.pkg-price-display[data-pkg="${pkg}"]`).textContent = Math.round(price);
         document.querySelector(`.pkg-per-credit[data-pkg="${pkg}"]`).textContent = perCredit.toFixed(3);
-        document.querySelector(`.pkg-discount[data-pkg="${pkg}"]`).textContent = Math.round(discount);
       });
     }
 
@@ -994,6 +996,7 @@
       const standardPrice = getStandardPrice();
       const proPrice = getProPrice();
       const advancedPrice = getAdvancedPrice();
+      const creditValue = getCreditValue();
 
       const signups = parseInt(document.getElementById('proj-signups').value) || 25;
       const paidConversion = (parseFloat(document.getElementById('proj-paid-conversion').value) || 20) / 100;
@@ -1002,7 +1005,8 @@
       const proPct = (parseFloat(document.getElementById('proj-pro-pct').value) || 35) / 100;
       const advancedPct = (parseFloat(document.getElementById('proj-advanced-pct').value) || 15) / 100;
       const creditBuyersPct = (parseFloat(document.getElementById('proj-credit-buyers-pct').value) || 40) / 100;
-      const avgCreditPurchase = parseFloat(document.getElementById('proj-credit-purchase').value) || 30;
+      const avgCreditsBought = parseFloat(document.getElementById('proj-credits-bought').value) || 300;
+      const avgCreditPurchase = avgCreditsBought * creditValue; // Calculate $ from credits × price
       const churnRate = (parseFloat(document.getElementById('proj-churn').value) || 5) / 100;
       const paymentFee = (parseFloat(document.getElementById('proj-payment-fee').value) || 3) / 100;
       const monthlyTarget = parseFloat(document.getElementById('monthly-target').value) || 4000;
@@ -1153,6 +1157,12 @@
     document.querySelectorAll('.editable').forEach(input => {
       input.addEventListener('input', recalculateAll);
     });
+
+    // Add event listener for auto-scale checkbox
+    const autoScaleCheckbox = document.getElementById('auto-scale-packages');
+    if (autoScaleCheckbox) {
+      autoScaleCheckbox.addEventListener('change', recalculateAll);
+    }
 
     // Initial calculation
     recalculateAll();
