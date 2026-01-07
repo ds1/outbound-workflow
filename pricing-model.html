@@ -756,39 +756,39 @@
       <tbody>
         <tr>
           <td>Trial signups @ Month 12</td>
-          <td class="number">240</td>
-          <td class="number">360</td>
-          <td class="number">600</td>
+          <td class="number" id="cons-signups">240</td>
+          <td class="number" id="norm-signups">360</td>
+          <td class="number" id="aggr-signups">600</td>
         </tr>
         <tr>
           <td>Paid subscribers @ Month 12</td>
-          <td class="number">46</td>
-          <td class="number">52</td>
-          <td class="number">78</td>
+          <td class="number" id="cons-subs">46</td>
+          <td class="number" id="norm-subs">52</td>
+          <td class="number" id="aggr-subs">78</td>
         </tr>
         <tr>
           <td>MRR @ Month 12</td>
-          <td class="number">$5,980</td>
-          <td class="number">$5,850</td>
-          <td class="number">$6,520</td>
+          <td class="number" id="cons-mrr">$5,980</td>
+          <td class="number" id="norm-mrr">$5,850</td>
+          <td class="number" id="aggr-mrr">$6,520</td>
         </tr>
         <tr>
           <td>ARPU (blended)</td>
-          <td class="number">$130</td>
-          <td class="number">$112</td>
-          <td class="number">$84</td>
+          <td class="number" id="cons-arpu">$130</td>
+          <td class="number" id="norm-arpu">$112</td>
+          <td class="number" id="aggr-arpu">$84</td>
         </tr>
         <tr class="highlight">
           <td><strong>Month 12 Net Profit</strong></td>
-          <td class="number positive"><strong>$4,180</strong></td>
-          <td class="number positive"><strong>$4,050</strong></td>
-          <td class="number positive"><strong>$4,290</strong></td>
+          <td class="number positive" id="cons-profit-row"><strong>$4,180</strong></td>
+          <td class="number positive" id="norm-profit-row"><strong>$4,050</strong></td>
+          <td class="number positive" id="aggr-profit-row"><strong>$4,290</strong></td>
         </tr>
         <tr>
           <td>12-Month Cumulative Profit</td>
-          <td class="number positive">$25,100</td>
-          <td class="number positive">$26,400</td>
-          <td class="number positive">$29,800</td>
+          <td class="number positive" id="cons-cumulative">$25,100</td>
+          <td class="number positive" id="norm-cumulative">$26,400</td>
+          <td class="number positive" id="aggr-cumulative">$29,800</td>
         </tr>
         <tr>
           <td>Risk Level</td>
@@ -1139,12 +1139,128 @@
       document.getElementById('margin-display').textContent = Math.round(margin) + '%';
     }
 
+    // Calculate a single scenario
+    function calculateScenario(params) {
+      const fixedCosts = calculateFixedCosts();
+      const creditValue = getCreditValue();
+      const paymentFee = (parseFloat(document.getElementById('proj-payment-fee').value) || 3) / 100;
+
+      const { signups, conversion, tierMix, stdPrice, proPrice, advPrice, creditBuyersPct, avgCreditsBought, churnRate } = params;
+
+      let stdUsers = 0, proUsers = 0, advUsers = 0;
+      let cumulative = 0;
+
+      for (let m = 1; m <= 12; m++) {
+        const newPaid = Math.round(signups * conversion);
+        const newStd = Math.round(newPaid * tierMix[0]);
+        const newPro = Math.round(newPaid * tierMix[1]);
+        const newAdv = Math.round(newPaid * tierMix[2]);
+
+        if (m === 1) {
+          stdUsers = newStd;
+          proUsers = newPro;
+          advUsers = newAdv;
+        } else {
+          stdUsers = Math.round(stdUsers * (1 - churnRate)) + newStd;
+          proUsers = Math.round(proUsers * (1 - churnRate * 0.8)) + newPro;
+          advUsers = Math.round(advUsers * (1 - churnRate * 0.5)) + newAdv;
+          // Upgrades
+          const stdToPro = Math.round(stdUsers * 0.05);
+          const proToAdv = Math.round(proUsers * 0.03);
+          stdUsers -= stdToPro;
+          proUsers += stdToPro - proToAdv;
+          advUsers += proToAdv;
+        }
+
+        const totalPaid = stdUsers + proUsers + advUsers;
+        const subRev = (stdUsers * stdPrice) + (proUsers * proPrice) + (advUsers * advPrice);
+        const creditRev = totalPaid * creditBuyersPct * avgCreditsBought * creditValue;
+        const gross = subRev + creditRev;
+        const fees = gross * paymentFee;
+        const net = gross - fees;
+        const costs = fixedCosts + (stdUsers * 3) + (proUsers * 5) + (advUsers * 15);
+        const profit = net - costs;
+        cumulative += profit;
+      }
+
+      const totalPaid = stdUsers + proUsers + advUsers;
+      const subRev = (stdUsers * stdPrice) + (proUsers * proPrice) + (advUsers * advPrice);
+      const creditRev = totalPaid * creditBuyersPct * avgCreditsBought * creditValue;
+      const mrr = subRev + creditRev;
+      const arpu = totalPaid > 0 ? mrr / totalPaid : 0;
+      const m12Profit = mrr * (1 - paymentFee) - fixedCosts - (stdUsers * 3) - (proUsers * 5) - (advUsers * 15);
+
+      return {
+        signups: signups * 12,
+        subs: totalPaid,
+        mrr: Math.round(mrr),
+        arpu: Math.round(arpu),
+        profit: Math.round(m12Profit),
+        cumulative: Math.round(cumulative),
+        users: { std: stdUsers, pro: proUsers, adv: advUsers }
+      };
+    }
+
+    // Calculate all three scenarios
+    function calculateScenarios() {
+      const avgCreditsBought = parseFloat(document.getElementById('proj-credits-bought').value) || 300;
+
+      // Conservative: fewer trials, premium pricing
+      const cons = calculateScenario({
+        signups: 20, conversion: 0.25, tierMix: [0.40, 0.40, 0.20],
+        stdPrice: 69, proPrice: 199, advPrice: 449,
+        creditBuyersPct: 0.35, avgCreditsBought, churnRate: 0.04
+      });
+
+      // Normal: balanced approach
+      const norm = calculateScenario({
+        signups: 30, conversion: 0.20, tierMix: [0.50, 0.35, 0.15],
+        stdPrice: 49, proPrice: 149, advPrice: 349,
+        creditBuyersPct: 0.40, avgCreditsBought, churnRate: 0.05
+      });
+
+      // Aggressive: high volume, competitive pricing
+      const aggr = calculateScenario({
+        signups: 50, conversion: 0.18, tierMix: [0.55, 0.30, 0.15],
+        stdPrice: 39, proPrice: 99, advPrice: 249,
+        creditBuyersPct: 0.50, avgCreditsBought, churnRate: 0.06
+      });
+
+      // Update Conservative card and table
+      document.getElementById('conservative-profit').textContent = '$' + cons.profit.toLocaleString();
+      document.getElementById('cons-signups').textContent = cons.signups;
+      document.getElementById('cons-subs').textContent = cons.subs;
+      document.getElementById('cons-mrr').textContent = '$' + cons.mrr.toLocaleString();
+      document.getElementById('cons-arpu').textContent = '$' + cons.arpu;
+      document.getElementById('cons-profit-row').innerHTML = '<strong>$' + cons.profit.toLocaleString() + '</strong>';
+      document.getElementById('cons-cumulative').textContent = '$' + cons.cumulative.toLocaleString();
+
+      // Update Normal card and table
+      document.getElementById('normal-profit').textContent = '$' + norm.profit.toLocaleString();
+      document.getElementById('norm-signups').textContent = norm.signups;
+      document.getElementById('norm-subs').textContent = norm.subs;
+      document.getElementById('norm-mrr').textContent = '$' + norm.mrr.toLocaleString();
+      document.getElementById('norm-arpu').textContent = '$' + norm.arpu;
+      document.getElementById('norm-profit-row').innerHTML = '<strong>$' + norm.profit.toLocaleString() + '</strong>';
+      document.getElementById('norm-cumulative').textContent = '$' + norm.cumulative.toLocaleString();
+
+      // Update Aggressive card and table
+      document.getElementById('aggressive-profit').textContent = '$' + aggr.profit.toLocaleString();
+      document.getElementById('aggr-signups').textContent = aggr.signups;
+      document.getElementById('aggr-subs').textContent = aggr.subs;
+      document.getElementById('aggr-mrr').textContent = '$' + aggr.mrr.toLocaleString();
+      document.getElementById('aggr-arpu').textContent = '$' + aggr.arpu;
+      document.getElementById('aggr-profit-row').innerHTML = '<strong>$' + aggr.profit.toLocaleString() + '</strong>';
+      document.getElementById('aggr-cumulative').textContent = '$' + aggr.cumulative.toLocaleString();
+    }
+
     // Recalculate everything
     function recalculateAll() {
       calculateFixedCosts();
       calculateVariableCosts();
       calculatePackages();
       calculateProjections();
+      calculateScenarios();
 
       // Update display values
       const standardPriceDisplay = document.getElementById('standard-price-display');
