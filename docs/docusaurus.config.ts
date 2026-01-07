@@ -72,9 +72,27 @@ const config: Config = {
           position: 'left',
         },
         {
-          href: 'https://feedback.deepoutbound.com',
-          label: 'Feedback & Roadmap',
+          type: 'dropdown',
+          label: 'Feedback',
           position: 'left',
+          items: [
+            {
+              href: 'https://feedback.deepoutbound.com/feature-requests',
+              label: 'Feature Requests',
+            },
+            {
+              href: 'https://feedback.deepoutbound.com/bugs',
+              label: 'Bug Reports',
+            },
+            {
+              href: 'https://feedback.deepoutbound.com/integrations',
+              label: 'Integrations',
+            },
+            {
+              href: 'https://feedback.deepoutbound.com/roadmap',
+              label: 'Roadmap',
+            },
+          ],
         },
         {
           href: 'https://deepoutbound.com',
@@ -125,14 +143,18 @@ const config: Config = {
           items: [
             {
               label: 'Feature Requests',
-              href: 'https://feedback.deepoutbound.com',
+              href: 'https://feedback.deepoutbound.com/feature-requests',
             },
             {
               label: 'Report a Bug',
-              href: 'https://feedback.deepoutbound.com',
+              href: 'https://feedback.deepoutbound.com/bugs',
             },
             {
-              label: 'Public Roadmap',
+              label: 'Integrations',
+              href: 'https://feedback.deepoutbound.com/integrations',
+            },
+            {
+              label: 'Roadmap',
               href: 'https://feedback.deepoutbound.com/roadmap',
             },
           ],
