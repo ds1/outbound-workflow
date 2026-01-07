@@ -140,6 +140,8 @@ export type Database = {
           total_replied: number;
           total_converted: number;
           created_by: string | null;
+          started_at: string | null;
+          completed_at: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -159,6 +161,8 @@ export type Database = {
           total_replied?: number;
           total_converted?: number;
           created_by?: string | null;
+          started_at?: string | null;
+          completed_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -178,6 +182,8 @@ export type Database = {
           total_replied?: number;
           total_converted?: number;
           created_by?: string | null;
+          started_at?: string | null;
+          completed_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };
