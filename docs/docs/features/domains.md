@@ -55,7 +55,7 @@ Click the action menu (⋮) on any domain row to:
 
 ### Landing Pages
 
-- Use professional landing pages (Spaceship, Afternic, Dan.com)
+- Use professional landing pages (Spaceship, Afternic, NamePros, etc.)
 - Ensure the landing page shows current pricing
 - Include multiple contact options
 
