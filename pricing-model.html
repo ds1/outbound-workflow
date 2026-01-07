@@ -973,19 +973,18 @@
 
     // Calculate package pricing
     function calculatePackages() {
+      const baseCreditValue = getCreditValue(); // Base per-credit cost
       const packages = ['small', 'standard', 'bulk'];
-      const smallCredits = parseInt(document.querySelector('.pkg-credits[data-pkg="small"]').value) || 100;
-      const smallPrice = parseFloat(document.querySelector('.pkg-price[data-pkg="small"]').value) || 10;
-      const smallPerCredit = smallCredits > 0 ? smallPrice / smallCredits : 0.10;
 
       packages.forEach(pkg => {
         const credits = parseInt(document.querySelector(`.pkg-credits[data-pkg="${pkg}"]`).value) || 0;
         const price = parseFloat(document.querySelector(`.pkg-price[data-pkg="${pkg}"]`).value) || 0;
         const perCredit = credits > 0 ? price / credits : 0;
-        const discount = smallPerCredit > 0 ? ((1 - (perCredit / smallPerCredit)) * 100) : 0;
+        // Discount is relative to base credit value
+        const discount = baseCreditValue > 0 ? ((1 - (perCredit / baseCreditValue)) * 100) : 0;
 
         document.querySelector(`.pkg-per-credit[data-pkg="${pkg}"]`).textContent = perCredit.toFixed(3);
-        document.querySelector(`.pkg-discount[data-pkg="${pkg}"]`).textContent = Math.round(Math.max(0, discount));
+        document.querySelector(`.pkg-discount[data-pkg="${pkg}"]`).textContent = Math.round(discount);
       });
     }
 
