@@ -456,7 +456,57 @@ npm run lint         # Run ESLint
 
 # Database
 # Run migrations in Supabase dashboard SQL editor
+
+# Manual Vercel deployment (if needed)
+npx vercel --prod              # Deploy main app
+npx vercel --prod --cwd docs   # Deploy docs
 ```
+
+## Deployment & Hosting
+
+Both the main app and documentation are hosted on Vercel with Git auto-deploy.
+
+### Vercel Projects
+
+| Project | URL | Root Directory | Deploys When |
+|---------|-----|----------------|--------------|
+| `outbound-workflow` | www.deepoutbound.com | `/` (root) | Files outside `docs/` change |
+| `deepoutbound-docs` | docs.deepoutbound.com | `/docs` | Files in `docs/` change |
+
+### Git Auto-Deploy Configuration
+
+Both projects are connected to the same GitHub repository (`ds1/outbound-workflow`). Pushing to `main` triggers deployments automatically.
+
+**outbound-workflow** (main Next.js app):
+- Git connected to `ds1/outbound-workflow`
+- Production branch: `main`
+- Ignored Build Step: `git diff --quiet HEAD^ HEAD -- . ':!docs/'`
+  - Skips build if only `docs/` changed
+
+**deepoutbound-docs** (Docusaurus site):
+- Git connected to `ds1/outbound-workflow`
+- Root Directory: `docs`
+- Production branch: `main`
+- "Skip deployments when there are no changes to root directory" enabled
+  - Skips build if `docs/` didn't change
+
+### TypeScript Configuration
+
+The root `tsconfig.json` excludes the `docs/` folder to prevent the Next.js build from trying to compile Docusaurus TypeScript files:
+
+```json
+{
+  "exclude": ["node_modules", "docs"]
+}
+```
+
+This is required because the `docs/` folder has its own dependencies (like `prism-react-renderer`) that aren't installed in the root project.
+
+### Deployment Workflow
+
+1. **Code changes** (outside `docs/`): Push to `main` → outbound-workflow builds → deepoutbound-docs skips
+2. **Documentation changes** (in `docs/`): Push to `main` → deepoutbound-docs builds → outbound-workflow skips
+3. **Both changed**: Push to `main` → both projects build
 
 ## Setup Status
 
