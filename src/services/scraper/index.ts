@@ -24,8 +24,8 @@ export interface ScrapeResult {
   errors: string[];
 }
 
-// Common email patterns to extract
-const EMAIL_REGEX = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
+// Common email patterns to extract (with word boundary to prevent matching trailing text)
+const EMAIL_REGEX = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}\b/g;
 
 // US phone patterns
 const PHONE_REGEX = /(?:\+?1[-.\s]?)?\(?[0-9]{3}\)?[-.\s]?[0-9]{3}[-.\s]?[0-9]{4}/g;
@@ -139,16 +139,44 @@ class ScraperService {
   }
 
   /**
+   * Extract text from HTML with proper spacing between elements
+   * Cheerio's .text() doesn't add spaces between adjacent elements,
+   * which causes emails to be concatenated with surrounding text
+   */
+  private extractTextWithSpacing($: cheerio.CheerioAPI): string {
+    // Add spaces after block-level elements before extracting text
+    $("p, div, br, li, td, th, h1, h2, h3, h4, h5, h6, span, a").each((_, el) => {
+      const $el = $(el);
+      $el.append(" ");
+    });
+
+    // Get text and normalize whitespace
+    return $("body").text().replace(/\s+/g, " ").trim();
+  }
+
+  /**
    * Extract emails from text with improved filtering
    */
   extractEmails(text: string): string[] {
     const decodedText = text
+      // Decode unicode escapes
       .replace(/\\u003e/gi, ">")
       .replace(/\\u003c/gi, "<")
       .replace(/u003e/gi, ">")
       .replace(/u003c/gi, "<")
+      // Decode URL encoding
       .replace(/%40/g, "@")
-      .replace(/%2E/gi, ".");
+      .replace(/%2E/gi, ".")
+      // Normalize obfuscated @ symbols
+      .replace(/\s*\[at\]\s*/gi, "@")
+      .replace(/\s*\(at\)\s*/gi, "@")
+      .replace(/\s*\{at\}\s*/gi, "@")
+      .replace(/\s+at\s+/gi, "@")
+      // Normalize obfuscated dots
+      .replace(/\s*\[dot\]\s*/gi, ".")
+      .replace(/\s*\(dot\)\s*/gi, ".")
+      .replace(/\s*\{dot\}\s*/gi, ".")
+      .replace(/\s+dot\s+/gi, ".");
 
     const matches = decodedText.match(EMAIL_REGEX) || [];
 
@@ -237,17 +265,17 @@ class ScraperService {
       const html = await this.fetchPage(url, opts.timeout_ms || 15000);
       const $ = cheerio.load(html);
 
-      // Get text content
-      const text = $("body").text();
+      // Extract company name first (before modifying DOM)
+      const company = this.extractCompanyName($);
 
-      // Extract emails
+      // Get text content with proper spacing between elements
+      const text = this.extractTextWithSpacing($);
+
+      // Extract emails from both raw HTML (for mailto: links) and spaced text
       const emails = this.extractEmails(html + " " + text);
 
       // Extract phones
       const phones = this.extractPhones(text);
-
-      // Extract company name
-      const company = this.extractCompanyName($);
 
       const now = new Date().toISOString();
 
@@ -346,11 +374,16 @@ class ScraperService {
       const $ = cheerio.load(html);
       pagesScraped++;
 
-      // Extract contacts from homepage
-      const text = $("body").text();
+      // Extract company name first (before modifying DOM)
+      const company = this.extractCompanyName($);
+
+      // Find contact page URLs (before modifying DOM)
+      const contactLinks = this.findContactPageUrls($, baseUrl);
+
+      // Extract contacts from homepage with proper text spacing
+      const text = this.extractTextWithSpacing($);
       const emails = this.extractEmails(html + " " + text);
       const phones = this.extractPhones(text);
-      const company = this.extractCompanyName($);
       const now = new Date().toISOString();
 
       for (const email of emails) {
@@ -366,8 +399,7 @@ class ScraperService {
         }
       }
 
-      // Find and scrape contact pages
-      const contactLinks = this.findContactPageUrls($, baseUrl);
+      // Scrape contact pages
 
       for (const link of contactLinks) {
         if (pagesScraped >= (opts.max_pages || 5)) break;
