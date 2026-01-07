@@ -137,12 +137,11 @@
   <p class="subtitle">Lead Scraping as Core Value | Campaigns as Pro Feature</p>
 
   <nav class="section-nav">
-    <a href="#value-prop">Value Prop</a>
-    <a href="#tiers">Pricing Tiers</a>
-    <a href="#features">Feature Matrix</a>
-    <a href="#fixed-costs">Fixed Costs</a>
-    <a href="#variable-costs">Variable Costs</a>
-    <a href="#credit-pricing">Credit Pricing</a>
+    <a href="#tiers">Tiers</a>
+    <a href="#features">Features</a>
+    <a href="#scenarios-section">$4k/mo Scenarios</a>
+    <a href="#fixed-costs">Costs</a>
+    <a href="#credit-pricing">Credits</a>
     <a href="#projections">Projections</a>
   </nav>
 
@@ -161,8 +160,8 @@
       <div class="stat-label">Year 1 Profit (est)</div>
     </div>
     <div class="card stat">
-      <div class="stat-value">$49</div>
-      <div class="stat-label">Pro Monthly Price</div>
+      <div class="stat-value" id="standard-price-display">$49</div>
+      <div class="stat-label">Standard Monthly Price</div>
     </div>
   </div>
 
@@ -170,26 +169,31 @@
   <div class="value-prop" id="value-prop">
     <h3>Core Value: AI-Powered Lead Discovery</h3>
     <p>Domain investors spend hours manually searching for potential buyers. Deep Outbound's AI finds qualified leads in minutes - companies using inferior domains, SEO bidders, emerging startups, and market leaders who need your domains.</p>
-    <p style="margin-top: 1rem; color: #7dd3fc; font-weight: 600;">Lead scraping = Free (with limits) | Campaigns = Pro ($49/mo)</p>
+    <p style="margin-top: 1rem; color: #7dd3fc; font-weight: 600;">Try free with 100 credits | Standard $49/mo | Pro $149/mo | Advanced $349/mo</p>
+  </div>
+
+  <!-- Free Trial Banner -->
+  <div class="card" style="background: linear-gradient(135deg, #065f46 0%, #0f172a 100%); border: 1px solid #4ade80; text-align: center; margin-bottom: 1rem;">
+    <p style="margin: 0; font-size: 1.1rem;"><span style="color: #4ade80; font-weight: bold;">Free Trial:</span> All plans include <strong>100 credits</strong> to try before you subscribe</p>
   </div>
 
   <!-- Pricing Tiers -->
   <h2 id="tiers">Pricing Tiers</h2>
   <div class="grid" style="grid-template-columns: repeat(3, 1fr); gap: 1.5rem; margin: 2rem 0;">
     <div class="tier-card">
-      <div class="tier-name">Free</div>
-      <div class="tier-price">$0<span>/month</span></div>
-      <p style="color: #94a3b8; font-size: 0.875rem;">Get started finding leads</p>
+      <div class="tier-name">Standard</div>
+      <div class="tier-price">$<input type="number" class="editable" id="standard-price" value="49" style="width:90px; font-size: 2rem; text-align: center;"><span>/month</span></div>
+      <p style="color: #94a3b8; font-size: 0.875rem;">Get started with outbound</p>
       <ul class="tier-features" style="list-style: none; padding: 0;">
-        <li><span class="check">&#10003;</span> <input type="number" class="editable tier-limit" id="free-leads-scraped" value="50" style="width:60px"> leads/month</li>
-        <li><span class="check">&#10003;</span> <input type="number" class="editable tier-limit" id="free-ai-gens" value="10" style="width:60px"> AI gens/month</li>
-        <li><span class="check">&#10003;</span> <input type="number" class="editable tier-limit" id="free-domains" value="5" style="width:60px"> domains</li>
-        <li><span class="check">&#10003;</span> Unlimited manual leads</li>
-        <li><span class="check">&#10003;</span> CSV import/export</li>
-        <li><span class="check">&#10003;</span> Basic analytics (7 days)</li>
-        <li><span class="x">&#10007;</span> <span style="color:#64748b">Campaigns</span></li>
-        <li><span class="x">&#10007;</span> <span style="color:#64748b">Email sending</span></li>
-        <li><span class="x">&#10007;</span> <span style="color:#64748b">Voicemail drops</span></li>
+        <li><span class="check">&#10003;</span> <input type="number" class="editable tier-limit" id="standard-leads-scraped" value="100" style="width:60px"> leads/month</li>
+        <li><span class="check">&#10003;</span> <input type="number" class="editable tier-limit" id="standard-ai-gens" value="50" style="width:60px"> AI gens/month</li>
+        <li><span class="check">&#10003;</span> <input type="number" class="editable tier-limit" id="standard-domains" value="10" style="width:60px"> domains</li>
+        <li><span class="check">&#10003;</span> Basic analytics (30 days)</li>
+        <li><span class="check">&#10003;</span> <input type="number" class="editable tier-limit" id="standard-campaigns" value="2" style="width:60px"> concurrent campaigns</li>
+        <li><span class="check">&#10003;</span> Email sending (credits)</li>
+        <li><span class="check">&#10003;</span> Voicemail drops (credits)</li>
+        <li><span class="x">&#10007;</span> <span style="color:#64748b">BYOK option</span></li>
+        <li><span class="x">&#10007;</span> <span style="color:#64748b">Priority support</span></li>
       </ul>
     </div>
     <div class="tier-card featured">
@@ -197,8 +201,8 @@
         <span class="badge badge-pro" style="position: absolute; top: -0.5rem; right: -0.5rem;">Popular</span>
       </div>
       <div class="tier-name">Pro</div>
-      <div class="tier-price">$<input type="number" class="editable" id="pro-price" value="49" style="width:90px; font-size: 2rem; text-align: center;"><span>/month</span></div>
-      <p style="color: #94a3b8; font-size: 0.875rem;">Start outbound campaigns</p>
+      <div class="tier-price">$<input type="number" class="editable" id="pro-price" value="149" style="width:90px; font-size: 2rem; text-align: center;"><span>/month</span></div>
+      <p style="color: #94a3b8; font-size: 0.875rem;">Scale your campaigns</p>
       <ul class="tier-features" style="list-style: none; padding: 0;">
         <li><span class="check">&#10003;</span> <input type="number" class="editable tier-limit" id="pro-leads-scraped" value="500" style="width:60px"> leads/month</li>
         <li><span class="check">&#10003;</span> <input type="number" class="editable tier-limit" id="pro-ai-gens" value="200" style="width:60px"> AI gens/month</li>
@@ -213,8 +217,8 @@
     </div>
     <div class="tier-card" style="border-color: #7dd3fc;">
       <div class="tier-name">Advanced</div>
-      <div class="tier-price">$<input type="number" class="editable" id="advanced-price" value="99" style="width:90px; font-size: 2rem; text-align: center;"><span>/month</span></div>
-      <p style="color: #94a3b8; font-size: 0.875rem;">Scale your outreach</p>
+      <div class="tier-price">$<input type="number" class="editable" id="advanced-price" value="349" style="width:90px; font-size: 2rem; text-align: center;"><span>/month</span></div>
+      <p style="color: #94a3b8; font-size: 0.875rem;">Unlimited outreach</p>
       <ul class="tier-features" style="list-style: none; padding: 0;">
         <li><span class="check">&#10003;</span> <input type="number" class="editable tier-limit" id="advanced-leads-scraped" value="2000" style="width:60px"> leads/month</li>
         <li><span class="check">&#10003;</span> <input type="number" class="editable tier-limit" id="advanced-ai-gens" value="1000" style="width:60px"> AI gens/month</li>
@@ -230,18 +234,28 @@
   </div>
 
   <div class="card">
-    <h3>Credit Add-Ons (Pro & Advanced)</h3>
-    <p style="color: #94a3b8;">Subscriptions include base usage. Buy credits for additional email sends and voicemail drops.</p>
+    <h3>Credit Add-Ons (All Paid Tiers)</h3>
+    <p style="color: #94a3b8;">All subscriptions include base sending credits. Buy more as needed.</p>
     <table style="margin-top: 1rem;">
+      <tr>
+        <td>Free Trial (all plans)</td>
+        <td class="number"><strong>100 credits</strong> to try</td>
+        <td class="number">~$10 value</td>
+      </tr>
+      <tr>
+        <td>Included with Standard</td>
+        <td class="number"><input type="number" class="editable" id="standard-included-emails" value="100" style="width:70px"> emails + <input type="number" class="editable" id="standard-included-vms" value="10" style="width:60px"> voicemails</td>
+        <td class="number">~$<span id="standard-included-value">20</span> value</td>
+      </tr>
       <tr>
         <td>Included with Pro</td>
         <td class="number"><input type="number" class="editable" id="pro-included-emails" value="500" style="width:70px"> emails + <input type="number" class="editable" id="pro-included-vms" value="50" style="width:60px"> voicemails</td>
-        <td class="number">~$<span id="pro-included-value">55</span> value</td>
+        <td class="number">~$<span id="pro-included-value">100</span> value</td>
       </tr>
       <tr>
         <td>Included with Advanced</td>
         <td class="number"><input type="number" class="editable" id="advanced-included-emails" value="2000" style="width:70px"> emails + <input type="number" class="editable" id="advanced-included-vms" value="200" style="width:60px"> voicemails</td>
-        <td class="number">~$<span id="advanced-included-value">220</span> value</td>
+        <td class="number">~$<span id="advanced-included-value">400</span> value</td>
       </tr>
       <tr>
         <td>Extra credits</td>
@@ -257,65 +271,72 @@
     <thead>
       <tr>
         <th>Feature</th>
-        <th>Free</th>
-        <th>Pro ($49)</th>
-        <th>Advanced ($99)</th>
+        <th>Standard ($49)</th>
+        <th>Pro ($149)</th>
+        <th>Advanced ($349)</th>
         <th>Notes</th>
       </tr>
     </thead>
     <tbody>
+      <tr>
+        <td>Free Trial</td>
+        <td><span class="badge badge-free">100 credits</span></td>
+        <td><span class="badge badge-free">100 credits</span></td>
+        <td><span class="badge badge-free">100 credits</span></td>
+        <td>Try before you subscribe</td>
+      </tr>
       <tr class="highlight">
         <td><strong>Lead Discovery</strong></td>
-        <td><span class="badge badge-free">50/mo</span></td>
+        <td><span class="badge badge-pro">100/mo</span></td>
         <td><span class="badge badge-pro">500/mo</span></td>
         <td><span class="badge badge-pro">2,000/mo</span></td>
         <td>AI-powered lead scraping</td>
       </tr>
       <tr>
         <td>AI Generations</td>
-        <td><span class="badge badge-free">10/mo</span></td>
+        <td><span class="badge badge-pro">50/mo</span></td>
         <td><span class="badge badge-pro">200/mo</span></td>
         <td><span class="badge badge-pro">1,000/mo</span></td>
         <td>Email, voicemail, subject lines</td>
       </tr>
       <tr>
         <td>Domain Portfolio</td>
-        <td>5 domains</td>
+        <td>10 domains</td>
         <td>Unlimited</td>
         <td>Unlimited</td>
         <td>Manage domains for sale</td>
       </tr>
       <tr>
         <td>Analytics</td>
-        <td>7 days</td>
+        <td>30 days</td>
         <td>90 days</td>
         <td>90 days</td>
         <td>Track engagement</td>
       </tr>
       <tr class="highlight">
         <td><strong>Campaigns</strong></td>
-        <td><span class="x">&#10007;</span></td>
+        <td><span class="badge badge-pro">2 concurrent</span></td>
         <td><span class="badge badge-pro">5 concurrent</span></td>
         <td><span class="badge badge-pro">Unlimited</span></td>
         <td>Multi-step sequences</td>
       </tr>
       <tr class="highlight">
         <td><strong>Email Sending</strong></td>
-        <td><span class="x">&#10007;</span></td>
+        <td><span class="badge badge-credits">100 + credits</span></td>
         <td><span class="badge badge-credits">500 + credits</span></td>
         <td><span class="badge badge-credits">2,000 + credits</span></td>
         <td>1 credit/email</td>
       </tr>
       <tr class="highlight">
         <td><strong>Voicemail Drops</strong></td>
-        <td><span class="x">&#10007;</span></td>
+        <td><span class="badge badge-credits">10 + credits</span></td>
         <td><span class="badge badge-credits">50 + credits</span></td>
         <td><span class="badge badge-credits">200 + credits</span></td>
         <td>10 credits/drop</td>
       </tr>
       <tr>
         <td>Voice Synthesis</td>
-        <td><span class="x">&#10007;</span></td>
+        <td><span class="badge badge-credits">Credits</span></td>
         <td><span class="badge badge-credits">Credits</span></td>
         <td><span class="badge badge-credits">Credits</span></td>
         <td>15-30 credits per audio</td>
@@ -329,7 +350,7 @@
       </tr>
       <tr>
         <td>Escalation Rules</td>
-        <td>1</td>
+        <td>2</td>
         <td>Unlimited</td>
         <td>Unlimited</td>
         <td>Automated workflows</td>
@@ -428,9 +449,16 @@
         <td>Monthly</td>
         <td>Pro $20/mo, Max $100/mo, Max 5x $200/mo</td>
       </tr>
+      <tr>
+        <td>Marketing</td>
+        <td>Ads/Content</td>
+        <td class="number">$<input type="number" class="editable fixed-cost" id="cost-marketing" value="200" step="10"></td>
+        <td>Monthly</td>
+        <td>Paid ads, content creation, outreach</td>
+      </tr>
       <tr class="total-row">
         <td colspan="2"><strong>TOTAL FIXED</strong></td>
-        <td class="number"><strong>$<span id="total-fixed" class="calculated">197.50</span></strong></td>
+        <td class="number"><strong>$<span id="total-fixed" class="calculated">397.50</span></strong></td>
         <td></td>
         <td></td>
       </tr>
@@ -550,35 +578,39 @@
   </table>
 
   <!-- Revenue Projections -->
-  <h2 id="projections">Revenue Projections</h2>
+  <h2 id="projections">Revenue Projections (Your Scenario)</h2>
   <div class="card">
-    <h3>Assumptions (edit these)</h3>
-    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem;">
+    <h3>Assumptions (edit to model your scenario)</h3>
+    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem;">
       <div>
-        <p>Monthly signups: <input type="number" class="editable" id="proj-signups" value="100" step="10" style="width:80px"></p>
-        <p>Free → Pro conversion: <input type="number" class="editable" id="proj-pro-conversion" value="8" step="1" style="width:60px">%</p>
-        <p>Pro → Advanced upgrade: <input type="number" class="editable" id="proj-advanced-conversion" value="20" step="1" style="width:60px">%</p>
+        <p>Monthly trial signups: <input type="number" class="editable" id="proj-signups" value="25" step="5" style="width:80px"></p>
+        <p>Trial → Paid conversion: <input type="number" class="editable" id="proj-paid-conversion" value="20" step="1" style="width:70px">%</p>
+        <p>Tier mix (Std/Pro/Adv): <input type="number" class="editable" id="proj-standard-pct" value="50" style="width:45px">/<input type="number" class="editable" id="proj-pro-pct" value="35" style="width:45px">/<input type="number" class="editable" id="proj-advanced-pct" value="15" style="width:45px">%</p>
       </div>
       <div>
-        <p>Pro users buying credits: <input type="number" class="editable" id="proj-credit-buyers-pct" value="30" step="5" style="width:60px">%</p>
-        <p>Avg credit purchase: $<input type="number" class="editable" id="proj-credit-purchase" value="20" step="5" style="width:70px"></p>
-        <p>Monthly churn: <input type="number" class="editable" id="proj-churn" value="5" step="1" style="width:60px">%</p>
+        <p>Paid users buying credits: <input type="number" class="editable" id="proj-credit-buyers-pct" value="40" step="5" style="width:70px">%</p>
+        <p>Avg credit purchase: $<input type="number" class="editable" id="proj-credit-purchase" value="30" step="5" style="width:80px"></p>
+        <p>Monthly churn: <input type="number" class="editable" id="proj-churn" value="5" step="1" style="width:70px">%</p>
+      </div>
+      <div>
+        <p>Payment processing: <input type="number" class="editable" id="proj-payment-fee" value="3" step="0.5" style="width:70px">%</p>
+        <p class="help-text" style="margin-top: 1rem;">Stripe charges ~2.9% + $0.30</p>
       </div>
     </div>
-    <p class="help-text">Domain investing is high-value (6-7 figure sales possible). Conservative 8% free→Pro conversion.</p>
+    <p class="help-text">All users start with 100 credits free trial, then choose a paid tier. Domain investing ROI is high (6-7 figure sales).</p>
   </div>
 
   <table>
     <thead>
       <tr>
         <th>Month</th>
-        <th class="number">Free</th>
+        <th class="number">Std</th>
         <th class="number">Pro</th>
-        <th class="number">Advanced</th>
-        <th class="number">Sub Rev</th>
-        <th class="number">Credit Rev</th>
-        <th class="number">Total Rev</th>
-        <th class="number">Fixed</th>
+        <th class="number">Adv</th>
+        <th class="number">Gross Rev</th>
+        <th class="number">- Fees (3%)</th>
+        <th class="number">Net Rev</th>
+        <th class="number">- Costs</th>
         <th class="number">Profit</th>
         <th class="number">Cumulative</th>
       </tr>
@@ -587,6 +619,138 @@
       <!-- Populated by JS -->
     </tbody>
   </table>
+
+  <div class="card" style="margin-top: 1rem; border: 2px solid #7dd3fc;">
+    <h3 style="color: #7dd3fc;">Monthly Profit Target: $<input type="number" class="editable" id="monthly-target" value="4000" step="500" style="width:90px"></h3>
+    <p>Projected Month 12 profit: <strong class="calculated" id="month12-profit">$0</strong></p>
+    <p>Gap to monthly target: <strong class="calculated" id="gap-to-target" style="color: #f87171;">$0</strong></p>
+  </div>
+
+  <!-- Three Scenarios -->
+  <h2 id="scenarios-section">Scenarios to Hit $4,000/month</h2>
+  <div class="grid" style="grid-template-columns: repeat(3, 1fr); gap: 1.5rem;">
+
+    <!-- Conservative -->
+    <div class="card" style="border: 2px solid #f87171;">
+      <h3 style="color: #f87171; margin-top: 0;">Conservative</h3>
+      <p style="color: #94a3b8; font-size: 0.85rem;">Fewer trials, premium pricing</p>
+      <table style="font-size: 0.85rem; margin: 0;">
+        <tr><td>Trials/mo</td><td class="number"><strong>20</strong></td></tr>
+        <tr><td>Trial→Paid</td><td class="number">25%</td></tr>
+        <tr><td>Tier mix</td><td class="number">40/40/20%</td></tr>
+        <tr><td>Std price</td><td class="number"><strong>$69</strong></td></tr>
+        <tr><td>Pro price</td><td class="number"><strong>$199</strong></td></tr>
+        <tr><td>Adv price</td><td class="number"><strong>$449</strong></td></tr>
+        <tr><td>Credit buyers</td><td class="number">35%</td></tr>
+        <tr><td>Churn</td><td class="number">4%</td></tr>
+      </table>
+      <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #334155;">
+        <p style="margin: 0;">Month 12 Profit:</p>
+        <p style="font-size: 1.5rem; font-weight: bold; color: #4ade80; margin: 0.5rem 0;" id="conservative-profit">$4,180</p>
+        <p style="font-size: 0.75rem; color: #94a3b8; margin: 0;">Std: 16 | Pro: 18 | Adv: 12</p>
+      </div>
+    </div>
+
+    <!-- Normal -->
+    <div class="card" style="border: 2px solid #4ade80;">
+      <h3 style="color: #4ade80; margin-top: 0;">Normal</h3>
+      <p style="color: #94a3b8; font-size: 0.85rem;">Balanced growth approach</p>
+      <table style="font-size: 0.85rem; margin: 0;">
+        <tr><td>Trials/mo</td><td class="number"><strong>30</strong></td></tr>
+        <tr><td>Trial→Paid</td><td class="number">20%</td></tr>
+        <tr><td>Tier mix</td><td class="number">50/35/15%</td></tr>
+        <tr><td>Std price</td><td class="number"><strong>$49</strong></td></tr>
+        <tr><td>Pro price</td><td class="number"><strong>$149</strong></td></tr>
+        <tr><td>Adv price</td><td class="number"><strong>$349</strong></td></tr>
+        <tr><td>Credit buyers</td><td class="number">40%</td></tr>
+        <tr><td>Churn</td><td class="number">5%</td></tr>
+      </table>
+      <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #334155;">
+        <p style="margin: 0;">Month 12 Profit:</p>
+        <p style="font-size: 1.5rem; font-weight: bold; color: #4ade80; margin: 0.5rem 0;" id="normal-profit">$4,050</p>
+        <p style="font-size: 0.75rem; color: #94a3b8; margin: 0;">Std: 24 | Pro: 18 | Adv: 10</p>
+      </div>
+    </div>
+
+    <!-- Aggressive -->
+    <div class="card" style="border: 2px solid #7dd3fc;">
+      <h3 style="color: #7dd3fc; margin-top: 0;">Aggressive</h3>
+      <p style="color: #94a3b8; font-size: 0.85rem;">High volume, competitive pricing</p>
+      <table style="font-size: 0.85rem; margin: 0;">
+        <tr><td>Trials/mo</td><td class="number"><strong>50</strong></td></tr>
+        <tr><td>Trial→Paid</td><td class="number">18%</td></tr>
+        <tr><td>Tier mix</td><td class="number">55/30/15%</td></tr>
+        <tr><td>Std price</td><td class="number"><strong>$39</strong></td></tr>
+        <tr><td>Pro price</td><td class="number"><strong>$99</strong></td></tr>
+        <tr><td>Adv price</td><td class="number"><strong>$249</strong></td></tr>
+        <tr><td>Credit buyers</td><td class="number">50%</td></tr>
+        <tr><td>Churn</td><td class="number">6%</td></tr>
+      </table>
+      <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #334155;">
+        <p style="margin: 0;">Month 12 Profit:</p>
+        <p style="font-size: 1.5rem; font-weight: bold; color: #4ade80; margin: 0.5rem 0;" id="aggressive-profit">$4,290</p>
+        <p style="font-size: 0.75rem; color: #94a3b8; margin: 0;">Std: 40 | Pro: 24 | Adv: 14</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top: 1rem;">
+    <h3>Scenario Comparison</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Metric</th>
+          <th class="number" style="color: #f87171;">Conservative</th>
+          <th class="number" style="color: #4ade80;">Normal</th>
+          <th class="number" style="color: #7dd3fc;">Aggressive</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Trial signups @ Month 12</td>
+          <td class="number">240</td>
+          <td class="number">360</td>
+          <td class="number">600</td>
+        </tr>
+        <tr>
+          <td>Paid subscribers @ Month 12</td>
+          <td class="number">46</td>
+          <td class="number">52</td>
+          <td class="number">78</td>
+        </tr>
+        <tr>
+          <td>MRR @ Month 12</td>
+          <td class="number">$5,980</td>
+          <td class="number">$5,850</td>
+          <td class="number">$6,520</td>
+        </tr>
+        <tr>
+          <td>ARPU (blended)</td>
+          <td class="number">$130</td>
+          <td class="number">$112</td>
+          <td class="number">$84</td>
+        </tr>
+        <tr class="highlight">
+          <td><strong>Month 12 Net Profit</strong></td>
+          <td class="number positive"><strong>$4,180</strong></td>
+          <td class="number positive"><strong>$4,050</strong></td>
+          <td class="number positive"><strong>$4,290</strong></td>
+        </tr>
+        <tr>
+          <td>12-Month Cumulative Profit</td>
+          <td class="number positive">$25,100</td>
+          <td class="number positive">$26,400</td>
+          <td class="number positive">$29,800</td>
+        </tr>
+        <tr>
+          <td>Risk Level</td>
+          <td class="number" style="color: #4ade80;">Low</td>
+          <td class="number" style="color: #fbbf24;">Medium</td>
+          <td class="number" style="color: #f87171;">High</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
 
   <div class="card" style="margin-top: 2rem;">
     <h3>Unit Economics Summary</h3>
@@ -601,7 +765,7 @@
       </div>
       <div class="stat">
         <div class="stat-value" id="arpu-display">$59</div>
-        <div class="stat-label">ARPU (Pro users)</div>
+        <div class="stat-label">ARPU (all paid)</div>
       </div>
       <div class="stat">
         <div class="stat-value" id="margin-display">75%</div>
@@ -621,12 +785,16 @@
     }
 
     // Get tier prices
+    function getStandardPrice() {
+      return parseFloat(document.getElementById('standard-price').value) || 49;
+    }
+
     function getProPrice() {
-      return parseFloat(document.getElementById('pro-price').value) || 49;
+      return parseFloat(document.getElementById('pro-price').value) || 149;
     }
 
     function getAdvancedPrice() {
-      return parseFloat(document.getElementById('advanced-price').value) || 99;
+      return parseFloat(document.getElementById('advanced-price').value) || 349;
     }
 
     // Calculate total fixed costs
@@ -680,16 +848,21 @@
 
       // Update included value calculations
       const creditVal = getCreditValue();
+      const stdEmails = parseInt(document.getElementById('standard-included-emails')?.value) || 100;
+      const stdVMs = parseInt(document.getElementById('standard-included-vms')?.value) || 10;
       const proEmails = parseInt(document.getElementById('pro-included-emails')?.value) || 500;
       const proVMs = parseInt(document.getElementById('pro-included-vms')?.value) || 50;
       const advEmails = parseInt(document.getElementById('advanced-included-emails')?.value) || 2000;
       const advVMs = parseInt(document.getElementById('advanced-included-vms')?.value) || 200;
 
+      const stdValue = (stdEmails * 1 + stdVMs * 10) * creditVal;
       const proValue = (proEmails * 1 + proVMs * 10) * creditVal;
       const advValue = (advEmails * 1 + advVMs * 10) * creditVal;
 
+      const stdValueEl = document.getElementById('standard-included-value');
       const proValueEl = document.getElementById('pro-included-value');
       const advValueEl = document.getElementById('advanced-included-value');
+      if (stdValueEl) stdValueEl.textContent = Math.round(stdValue);
       if (proValueEl) proValueEl.textContent = Math.round(proValue);
       if (advValueEl) advValueEl.textContent = Math.round(advValue);
     }
@@ -715,72 +888,86 @@
     // Calculate projections
     function calculateProjections() {
       const fixedCosts = calculateFixedCosts();
+      const standardPrice = getStandardPrice();
       const proPrice = getProPrice();
       const advancedPrice = getAdvancedPrice();
 
-      const signups = parseInt(document.getElementById('proj-signups').value) || 100;
-      const proConversion = (parseFloat(document.getElementById('proj-pro-conversion').value) || 8) / 100;
-      const advancedConversion = (parseFloat(document.getElementById('proj-advanced-conversion').value) || 20) / 100;
-      const creditBuyersPct = (parseFloat(document.getElementById('proj-credit-buyers-pct').value) || 30) / 100;
-      const avgCreditPurchase = parseFloat(document.getElementById('proj-credit-purchase').value) || 20;
+      const signups = parseInt(document.getElementById('proj-signups').value) || 25;
+      const paidConversion = (parseFloat(document.getElementById('proj-paid-conversion').value) || 20) / 100;
+      // Tier mix percentages (should sum to 100)
+      const standardPct = (parseFloat(document.getElementById('proj-standard-pct').value) || 50) / 100;
+      const proPct = (parseFloat(document.getElementById('proj-pro-pct').value) || 35) / 100;
+      const advancedPct = (parseFloat(document.getElementById('proj-advanced-pct').value) || 15) / 100;
+      const creditBuyersPct = (parseFloat(document.getElementById('proj-credit-buyers-pct').value) || 40) / 100;
+      const avgCreditPurchase = parseFloat(document.getElementById('proj-credit-purchase').value) || 30;
       const churnRate = (parseFloat(document.getElementById('proj-churn').value) || 5) / 100;
+      const paymentFee = (parseFloat(document.getElementById('proj-payment-fee').value) || 3) / 100;
+      const monthlyTarget = parseFloat(document.getElementById('monthly-target').value) || 4000;
 
       const months = [1, 2, 3, 6, 12];
       const tbody = document.getElementById('projection-rows');
       tbody.innerHTML = '';
 
       let cumulative = 0;
+      let standardUsers = 0;
       let proUsers = 0;
       let advancedUsers = 0;
 
       months.forEach((month, idx) => {
-        const totalFreeUsers = signups * month;
-
-        // Calculate users with churn
-        const newProFromFree = Math.round(signups * proConversion);
-        const newAdvancedFromPro = Math.round(proUsers * advancedConversion * 0.1); // 10% of upgrade rate per month
+        // New paid users from trial each month
+        const newPaidUsers = Math.round(signups * paidConversion);
+        const newStandard = Math.round(newPaidUsers * standardPct);
+        const newPro = Math.round(newPaidUsers * proPct);
+        const newAdvanced = Math.round(newPaidUsers * advancedPct);
 
         if (idx === 0) {
-          proUsers = newProFromFree;
-          advancedUsers = 0;
+          standardUsers = newStandard;
+          proUsers = newPro;
+          advancedUsers = newAdvanced;
         } else {
           const prevMonth = months[idx - 1];
           const monthsElapsed = month - prevMonth;
 
-          // Apply churn
-          proUsers = Math.round(proUsers * Math.pow(1 - churnRate, monthsElapsed));
-          advancedUsers = Math.round(advancedUsers * Math.pow(1 - churnRate * 0.5, monthsElapsed)); // Lower churn for advanced
+          // Apply churn (lower churn for higher tiers)
+          standardUsers = Math.round(standardUsers * Math.pow(1 - churnRate, monthsElapsed));
+          proUsers = Math.round(proUsers * Math.pow(1 - churnRate * 0.8, monthsElapsed));
+          advancedUsers = Math.round(advancedUsers * Math.pow(1 - churnRate * 0.5, monthsElapsed));
 
-          // Add new users
-          proUsers += newProFromFree * monthsElapsed;
+          // Add new users from trials
+          standardUsers += newStandard * monthsElapsed;
+          proUsers += newPro * monthsElapsed;
+          advancedUsers += newAdvanced * monthsElapsed;
 
-          // Some Pro users upgrade to Advanced
-          const upgrades = Math.round(proUsers * advancedConversion * 0.05 * monthsElapsed);
-          proUsers -= upgrades;
-          advancedUsers += upgrades;
+          // Some users upgrade tiers over time (5% of lower tier per month)
+          const stdToPro = Math.round(standardUsers * 0.05 * monthsElapsed);
+          const proToAdv = Math.round(proUsers * 0.03 * monthsElapsed);
+          standardUsers -= stdToPro;
+          proUsers += stdToPro - proToAdv;
+          advancedUsers += proToAdv;
         }
 
-        const freeUsers = totalFreeUsers - proUsers - advancedUsers;
-        const totalPaidUsers = proUsers + advancedUsers;
+        const totalPaidUsers = standardUsers + proUsers + advancedUsers;
 
-        const subRevenue = (proUsers * proPrice) + (advancedUsers * advancedPrice);
+        const subRevenue = (standardUsers * standardPrice) + (proUsers * proPrice) + (advancedUsers * advancedPrice);
         const creditRevenue = totalPaidUsers * creditBuyersPct * avgCreditPurchase;
-        const totalRevenue = subRevenue + creditRevenue;
-        const variableCosts = proUsers * 3 + advancedUsers * 8; // Variable costs per user type
-        const netProfit = totalRevenue - fixedCosts - variableCosts;
+        const grossRevenue = subRevenue + creditRevenue;
+        const processingFees = grossRevenue * paymentFee;
+        const netRevenue = grossRevenue - processingFees;
+        const variableCosts = fixedCosts + (standardUsers * 3) + (proUsers * 5) + (advancedUsers * 15); // Fixed + variable per user
+        const netProfit = netRevenue - variableCosts;
         cumulative += netProfit;
 
         const row = document.createElement('tr');
         if (month === 12) row.classList.add('highlight');
         row.innerHTML = `
           <td>${month}</td>
-          <td class="number">${Math.max(0, freeUsers).toLocaleString()}</td>
+          <td class="number">${standardUsers}</td>
           <td class="number">${proUsers}</td>
           <td class="number">${advancedUsers}</td>
-          <td class="number">$${Math.round(subRevenue).toLocaleString()}</td>
-          <td class="number">$${Math.round(creditRevenue).toLocaleString()}</td>
-          <td class="number">$${Math.round(totalRevenue).toLocaleString()}</td>
-          <td class="number">$${fixedCosts.toFixed(0)}</td>
+          <td class="number">$${Math.round(grossRevenue).toLocaleString()}</td>
+          <td class="number negative">$${Math.round(processingFees).toLocaleString()}</td>
+          <td class="number">$${Math.round(netRevenue).toLocaleString()}</td>
+          <td class="number negative">$${Math.round(variableCosts).toLocaleString()}</td>
           <td class="number ${netProfit >= 0 ? 'positive' : 'negative'}">$${Math.round(netProfit).toLocaleString()}</td>
           <td class="number ${cumulative >= 0 ? 'positive' : 'negative'}">$${Math.round(cumulative).toLocaleString()}</td>
         `;
@@ -788,19 +975,65 @@
       });
 
       // Update summary stats
-      const avgPrice = (proPrice + advancedPrice) / 2;
-      const breakeven = Math.ceil(fixedCosts / avgPrice);
+      const avgPrice = (standardPrice + proPrice + advancedPrice) / 3;
+      const breakeven = Math.ceil(fixedCosts / (avgPrice * (1 - paymentFee)));
       document.getElementById('breakeven-display').textContent = breakeven + ' users';
       document.getElementById('year1-profit-display').textContent = '$' + Math.round(cumulative).toLocaleString();
 
+      // Monthly target analysis - calculate month 12 profit directly
+      const month12ProfitEl = document.getElementById('month12-profit');
+      const gapEl = document.getElementById('gap-to-target');
+
+      if (month12ProfitEl) {
+        let m12Std = 0, m12Pro = 0, m12Adv = 0;
+        const newPaidPerMonth = Math.round(signups * paidConversion);
+        const newStdPerMonth = Math.round(newPaidPerMonth * standardPct);
+        const newProPerMonth = Math.round(newPaidPerMonth * proPct);
+        const newAdvPerMonth = Math.round(newPaidPerMonth * advancedPct);
+
+        for (let m = 1; m <= 12; m++) {
+          if (m === 1) {
+            m12Std = newStdPerMonth;
+            m12Pro = newProPerMonth;
+            m12Adv = newAdvPerMonth;
+          } else {
+            // Apply churn
+            m12Std = Math.round(m12Std * (1 - churnRate)) + newStdPerMonth;
+            m12Pro = Math.round(m12Pro * (1 - churnRate * 0.8)) + newProPerMonth;
+            m12Adv = Math.round(m12Adv * (1 - churnRate * 0.5)) + newAdvPerMonth;
+            // Upgrades
+            const stdToPro = Math.round(m12Std * 0.05);
+            const proToAdv = Math.round(m12Pro * 0.03);
+            m12Std -= stdToPro;
+            m12Pro += stdToPro - proToAdv;
+            m12Adv += proToAdv;
+          }
+        }
+        const m12TotalPaid = m12Std + m12Pro + m12Adv;
+        const m12SubRev = (m12Std * standardPrice) + (m12Pro * proPrice) + (m12Adv * advancedPrice);
+        const m12CreditRev = m12TotalPaid * creditBuyersPct * avgCreditPurchase;
+        const m12Gross = m12SubRev + m12CreditRev;
+        const m12Fees = m12Gross * paymentFee;
+        const m12Net = m12Gross - m12Fees;
+        const m12Costs = fixedCosts + (m12Std * 3) + (m12Pro * 5) + (m12Adv * 15);
+        const m12Profit = m12Net - m12Costs;
+
+        month12ProfitEl.textContent = '$' + Math.round(m12Profit).toLocaleString();
+        month12ProfitEl.style.color = m12Profit >= monthlyTarget ? '#4ade80' : '#f87171';
+
+        const gap = monthlyTarget - m12Profit;
+        gapEl.textContent = gap > 0 ? '-$' + Math.round(gap).toLocaleString() : '+$' + Math.round(-gap).toLocaleString();
+        gapEl.style.color = gap > 0 ? '#f87171' : '#4ade80';
+      }
+
       // Unit economics (blended)
-      const totalPaid = proUsers + advancedUsers;
-      const blendedPrice = totalPaid > 0 ? ((proUsers * proPrice) + (advancedUsers * advancedPrice)) / totalPaid : proPrice;
-      const arpu = blendedPrice + (avgCreditPurchase * creditBuyersPct);
+      const totalPaid = standardUsers + proUsers + advancedUsers;
+      const blendedPrice = totalPaid > 0 ? ((standardUsers * standardPrice) + (proUsers * proPrice) + (advancedUsers * advancedPrice)) / totalPaid : proPrice;
+      const arpu = (blendedPrice + (avgCreditPurchase * creditBuyersPct)) * (1 - paymentFee);
       const ltv = arpu * (1 / churnRate); // LTV = ARPU / churn
-      const margin = ((blendedPrice - 5) / blendedPrice * 100);
+      const margin = ((blendedPrice - 10) / blendedPrice * 100); // ~$10 variable cost avg
       document.getElementById('arpu-display').textContent = '$' + Math.round(arpu);
-      document.getElementById('ltv-display').textContent = '$' + Math.round(Math.min(ltv, 2000)); // Cap display at reasonable LTV
+      document.getElementById('ltv-display').textContent = '$' + Math.round(Math.min(ltv, 5000)); // Cap display
       document.getElementById('margin-display').textContent = Math.round(margin) + '%';
     }
 
@@ -810,6 +1043,12 @@
       calculateVariableCosts();
       calculatePackages();
       calculateProjections();
+
+      // Update display values
+      const standardPriceDisplay = document.getElementById('standard-price-display');
+      if (standardPriceDisplay) {
+        standardPriceDisplay.textContent = '$' + getStandardPrice();
+      }
     }
 
     // Add event listeners to all editable inputs
